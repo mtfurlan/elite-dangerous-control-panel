@@ -11,16 +11,25 @@
 #include <pico/stdio.h>
 
 #include "usb_descriptors.h"
+#include "led.h"
+#include "inputs.h"
 
-void custom_cdc_task(void);
-void hid_task(void);
+void hid_task(bool dirty, uint8_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
+
+
+static led_state_t led_state = BLINK_NOT_MOUNTED;
 
 int main(void)
 {
+
+    static uint8_t inputs = 0;
     // Initialize TinyUSB stack
     board_init();
     tusb_init();
+
+    led_init();
+    inputs_init();
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -35,29 +44,64 @@ int main(void)
         // TinyUSB device task | must be called regurlarly
         tud_task();
 
-        // custom tasks
-        custom_cdc_task();
-        //hid_task();
+        bool dirty = inputs_task(&inputs);
+
+        hid_task(dirty, &inputs);
+        led_task(led_state);
     }
 
     // indicate no error
     return 0;
 }
+
+//--------------------------------------------------------------------+
+// Device callbacks
+//--------------------------------------------------------------------+
+
+// Invoked when device is mounted
+void tud_mount_cb(void)
+{
+    led_state = BLINK_MOUNTED;
+}
+
+// Invoked when device is unmounted
+void tud_umount_cb(void)
+{
+    led_state = BLINK_NOT_MOUNTED;
+}
+
+// Invoked when usb bus is suspended
+// remote_wakeup_en : if host allow us  to perform remote wakeup
+// Within 7ms, device must draw an average of current less than 2.5 mA from bus
+void tud_suspend_cb(bool remote_wakeup_en)
+{
+    (void) remote_wakeup_en;
+    led_state = BLINK_SUSPENDED;
+}
+
+// Invoked when usb bus is resumed
+void tud_resume_cb(void)
+{
+    led_state = tud_mounted() ? BLINK_MOUNTED : BLINK_NOT_MOUNTED;
+}
+
 //--------------------------------------------------------------------+
 // USB HID
 //--------------------------------------------------------------------+
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-void hid_task(void)
+static uint8_t btn;
+void hid_task(bool dirty, uint8_t* inputs)
 {
+    btn = *inputs;
     // Poll every 10ms
     const uint32_t interval_ms = 10;
     static uint32_t start_ms = 0;
 
-    if ( board_millis() - start_ms < interval_ms) return; // not enough time
+    if (!dirty && ( board_millis() - start_ms < interval_ms)) {
+        return; // not enough time
+    }
     start_ms += interval_ms;
-
-    uint32_t const btn = board_button_read();
 
     // Remote wakeup
     if ( tud_suspended() && btn )
@@ -84,7 +128,7 @@ void tud_hid_report_complete_cb(uint8_t instance, uint8_t const* report, uint16_
 
     if (next_report_id < REPORT_ID_COUNT)
     {
-        send_hid_report(next_report_id, board_button_read());
+        send_hid_report(next_report_id, btn);
     }
 }
 
@@ -230,18 +274,6 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
 //--------------------------------------------------------------------+
 // USB CDC
 //--------------------------------------------------------------------+
-void custom_cdc_task(void)
-{
-    // polling CDC interfaces if wanted
-
-    // Check if CDC interface 0 (for pico sdk stdio) is connected and ready
-
-    if (tud_cdc_n_connected(0)) {
-        // print on CDC 0 some debug message
-        printf("Connected to CDC 0\n");
-        sleep_ms(5000); // wait for 5 seconds
-    }
-}
 
 // callback when data is received on a CDC interface
 void tud_cdc_rx_cb(uint8_t itf)
