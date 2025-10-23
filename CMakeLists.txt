@@ -6,6 +6,7 @@ include(../pico-sdk/pico_sdk_init.cmake)
 project(thingy)
 
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 pico_sdk_init()
 
@@ -13,6 +14,7 @@ add_executable(dev_hid_composite)
 
 target_sources(dev_hid_composite PUBLIC
         src/main.c
+        src/led.c
         src/usb_descriptors.c
         )
 

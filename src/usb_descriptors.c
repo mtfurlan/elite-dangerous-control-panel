@@ -48,7 +48,10 @@ tusb_desc_device_t const desc_device =
     .bLength            = sizeof(tusb_desc_device_t),
     .bDescriptorType    = TUSB_DESC_DEVICE,
     .bcdUSB             = USB_BCD,
-    .bDeviceClass       = 0x00,
+    //.bDeviceClass       = TUSB_CLASS_MISC,
+    //.bDeviceSubClass    = MISC_SUBCLASS_COMMON,
+    //.bDeviceProtocol    = MISC_PROTOCOL_IAD,
+    .bDeviceClass       = TUSB_CLASS_HID,
     .bDeviceSubClass    = 0x00,
     .bDeviceProtocol    = 0x00,
     .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
@@ -95,24 +98,33 @@ uint8_t const * tud_hid_descriptor_report_cb(uint8_t instance)
 //--------------------------------------------------------------------+
 // Configuration Descriptor
 //--------------------------------------------------------------------+
-
 enum
 {
-  ITF_NUM_HID,
-  ITF_NUM_TOTAL
+    ITF_NUM_CDC = 0,
+    ITF_NUM_CDC_DATA,
+    ITF_NUM_HID,
+    ITF_NUM_TOTAL
 };
 
-#define  CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_HID_DESC_LEN)
 
-#define EPNUM_HID   0x81
+#define CONFIG_TOTAL_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN + TUD_HID_DESC_LEN)
+  #define EPNUM_CDC_NOTIF  0x81
+  #define EPNUM_CDC_IN     0x82
+  #define EPNUM_CDC_OUT    0x02
+  #define EPNUM_HID        0x84
+
+
 
 uint8_t const desc_configuration[] =
 {
   // Config number, interface count, string index, total length, attribute, power in mA
   TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
 
+  // Interface number, string index, EP notification address and size, EP data address (out, in) and size.
+  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64),
+
   // Interface number, string index, protocol, report descriptor len, EP In address, size & polling interval
-  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
+  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 5, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 10)
 };
 
 #if TUD_OPT_HIGH_SPEED
@@ -128,6 +140,7 @@ tusb_desc_device_qualifier_t const desc_device_qualifier =
   .bDescriptorType    = TUSB_DESC_DEVICE_QUALIFIER,
   .bcdUSB             = USB_BCD,
 
+  // TODO stuff?
   .bDeviceClass       = 0x00,
   .bDeviceSubClass    = 0x00,
   .bDeviceProtocol    = 0x00,
@@ -153,7 +166,7 @@ uint8_t const* tud_descriptor_other_speed_configuration_cb(uint8_t index)
 {
   (void) index; // for multiple configurations
 
-  // other speed config is basically configuration with type = OHER_SPEED_CONFIG
+  // other speed config is basically configuration with type = OTHER_SPEED_CONFIG
   memcpy(desc_other_speed_config, desc_configuration, CONFIG_TOTAL_LEN);
   desc_other_speed_config[1] = TUSB_DESC_OTHER_SPEED_CONFIG;
 
@@ -193,6 +206,8 @@ char const *string_desc_arr[] =
   "TinyUSB",                     // 1: Manufacturer
   "TinyUSB Device",              // 2: Product
   NULL,                          // 3: Serials will use unique ID if possible
+  "TinyUSB CDC",                 // 4: CDC Interface
+  "TinyUSB hid stuff"            // 5: HIDs Interface
 };
 
 static uint16_t _desc_str[32 + 1];
