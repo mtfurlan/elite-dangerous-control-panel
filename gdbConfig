@@ -1,16 +1,16 @@
 define reload
-    shell cmake --build build
-    load
-    restart
+    if $_shell("cmake --build build")
+        echo The build failed\n
+    else
+        load
+        reboot
+    end
 end
 
-define restart
-    monitor reset halt
+define reboot
+    monitor reset init
     tbreak main
     c
 end
 
-set remote hardware-watchpoint-limit 4
-set remote hardware-breakpoint-limit 6
-
-restart
+reboot
