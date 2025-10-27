@@ -5,7 +5,7 @@ include(../pico-sdk/pico_sdk_init.cmake)
 
 project(thingy)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_BUILD_TYPE Debug)

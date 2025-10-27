@@ -51,7 +51,8 @@ uint8_t const *tud_descriptor_device_cb(void);
 uint8_t const desc_hid_report[] =
 {
   MY_REPORT_DESC_GAMEPAD_BUTTONS ( HID_REPORT_ID(REPORT_ID_GAMEPAD          )),
-  TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         )),
+  //TUD_HID_REPORT_DESC_GAMEPAD ( HID_REPORT_ID(REPORT_ID_GAMEPAD          )),
+  //TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         )),
 };
 // Invoked when received GET HID REPORT DESCRIPTOR
 // Application return pointer to descriptor
