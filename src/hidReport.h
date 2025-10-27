@@ -23,6 +23,13 @@
       HID_REPORT_SIZE    ( 1                                      ) ,\
       HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
     HID_COLLECTION_END                                            , \
+    /* 32 bit output */ \
+    HID_USAGE_PAGE_N  ( 0xFF42, 2                   )       ,\
+      HID_LOGICAL_MIN    ( 0                                      ) ,\
+      HID_LOGICAL_MAX    ( 1                                      ) ,\
+      HID_REPORT_COUNT   ( 32                                     ) ,\
+      HID_REPORT_SIZE    ( 1                                      ) ,\
+      HID_OUTPUT       ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE  ) ,\
   HID_COLLECTION_END \
 
 
@@ -30,6 +37,11 @@ typedef struct __attribute__ ((packed))
 {
   uint32_t buttons;  ///< Buttons mask for currently pressed buttons
 } my_hid_report_gamepad_buttons_t;
+
+typedef struct __attribute__ ((packed))
+{
+  uint32_t leds;
+} my_hid_report_output_data_t;
 
 
 

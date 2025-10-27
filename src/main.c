@@ -1,13 +1,7 @@
-/**
- * Copyright (c) 2024 Raspberry Pi (Trading) Ltd.
- *
- * SPDX-License-Identifier: BSD-3-Clause
- */
-
 #include <stdlib.h>
+
 #include <bsp/board_api.h>
 #include <tusb.h>
-
 #include <pico/stdio.h>
 
 #include "usb_descriptors.h"
@@ -15,7 +9,7 @@
 #include "inputs.h"
 #include "config.h"
 
-void hid_task(bool dirty, uint8_t* inputs);
+void hid_task(bool dirty, uint32_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
 
 static input_config_t config[] = {
@@ -33,7 +27,7 @@ static led_state_t led_state = BLINK_NOT_MOUNTED;
 int main(void)
 {
 
-    static uint8_t inputs = 0;
+    static uint32_t inputs = 0;
     // Initialize TinyUSB stack
     board_init();
     tusb_init();
@@ -49,6 +43,7 @@ int main(void)
     // let pico sdk use the first cdc interface for std io
     stdio_init_all();
 
+    printf("hello running");
     // main run loop
     while (1) {
         // TinyUSB device task | must be called regurlarly
@@ -101,7 +96,7 @@ void tud_resume_cb(void)
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 static uint8_t btn;
-void hid_task(bool dirty, uint8_t* inputs)
+void hid_task(bool dirty, uint32_t* inputs)
 {
     btn = *inputs;
     // Poll every 10ms
@@ -163,29 +158,20 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 {
     (void) instance;
 
-    if (report_type == HID_REPORT_TYPE_OUTPUT)
-    {
+    if (report_type == HID_REPORT_TYPE_OUTPUT) {
         // Set keyboard LED e.g Capslock, Numlock etc...
-        if (report_id == REPORT_ID_KEYBOARD)
-        {
+        if (report_id == REPORT_ID_GAMEPAD) {
             // bufsize should be (at least) 1
-            if ( bufsize < 1 ) return;
-
-            uint8_t const kbd_leds = buffer[0];
-
-            if (kbd_leds & KEYBOARD_LED_CAPSLOCK)
-            {
-                // Capslock On: disable blink, turn led on
-                // TODO
-                // led_state = 0;
-                // board_led_write(true);
-            }else
-            {
-                // Caplocks Off: back to normal blink
-                // TODO
-                // board_led_write(false);
-                // led_state = BLINK_MOUNTED;
+            if ( bufsize != sizeof(my_hid_report_output_data_t)) {
+                printf("got a weird size data from hid, reporrt id %d, size %d\n", report_id, bufsize);
+                return;
             }
+
+            my_hid_report_output_data_t* data = (my_hid_report_output_data_t*)buffer;
+
+            printf("got data %02X\n", (uint8_t)(data->leds & 0xff));
+        } else {
+            printf("got unexpected output repoort for id %d", report_id);
         }
     }
 }

@@ -38,6 +38,14 @@ links from linux kernel
   * wraps https://libusb.info/hidapi/group__API.html
 ```
 import hid
-dev = hid.Device(vid=0x1b4f, pid=0x42)
-dev.send_feature_report(bytes([0x00, 0x42, 0x55, 0x32]))
+with hid.Device(vid, pid) as h:
+    h.write(bytes([0x01, 0x42, 0, 0, 0]))
 ```
+
+
+udev:
+```
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="cafe", MODE:="0666"
+
+```
+hidapitester --vidpid CAFE:4003   --open --length 5 --send-output 1,0x15,0,0,0

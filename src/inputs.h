@@ -8,6 +8,6 @@
 
 
 int inputs_init(const input_config_t config[], size_t len);
-bool inputs_task(uint8_t* inputs);
+bool inputs_task(uint32_t* inputs);
 
 #endif // INPUTS_H
