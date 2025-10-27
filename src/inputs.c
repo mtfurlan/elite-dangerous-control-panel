@@ -1,18 +1,23 @@
 #include "inputs.h"
+
 #include <pico/stdlib.h>
 
-#define INPUT_PIN 2
-
-int inputs_init(void)
+int inputs_init(const input_config_t config[], size_t len)
 {
-    gpio_init(INPUT_PIN);
-    gpio_set_dir(INPUT_PIN, GPIO_IN);
-    gpio_pull_up(INPUT_PIN);
+    int pin;
+    for(size_t i = 0; i < len; ++i) {
+        pin = config[i].output_pin;
+        if(pin >= 0) {
+            gpio_init(pin);
+            gpio_set_dir(pin, GPIO_IN);
+            gpio_pull_up(pin);
+        }
+    }
 }
 
 bool inputs_task(uint8_t* inputs)
 {
-    if(gpio_get(INPUT_PIN) != (*inputs & 0x1)) {
+    if(gpio_get(2) != (*inputs & 0x1)) {
         *inputs ^= 0x1; // toggle
         return true;
     }

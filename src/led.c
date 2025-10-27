@@ -25,7 +25,7 @@ int led_task(led_state_t state)
     return 0;
 }
 
-int led_init(void)
+int led_init(const input_config_t config[], size_t len)
 {
     gpio_init(LED_R);
     gpio_set_dir(LED_R, GPIO_OUT);
@@ -37,5 +37,15 @@ int led_init(void)
     gpio_put(LED_R, 1);
     gpio_put(LED_G, 1);
     gpio_put(LED_B, 1);
+
+    int pin;
+    for(size_t i = 0; i < len; ++i) {
+        pin = config[i].output_pin;
+        if(pin >= 0) {
+            gpio_init(pin);
+            gpio_set_dir(pin, GPIO_OUT);
+            gpio_put(LED_R, 0);
+        }
+    }
     return 0;
 }

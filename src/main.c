@@ -13,10 +13,20 @@
 #include "usb_descriptors.h"
 #include "led.h"
 #include "inputs.h"
+#include "config.h"
 
 void hid_task(bool dirty, uint8_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
 
+static input_config_t config[] = {
+  {
+      .input = 0,
+      .output = 1,
+      .input_pin = 2,
+      .output_pin = -1,
+      .mode = DIRECT,
+  }
+};
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 
@@ -28,8 +38,8 @@ int main(void)
     board_init();
     tusb_init();
 
-    led_init();
-    inputs_init();
+    led_init(config, TU_ARRAY_SIZE(config));
+    inputs_init(config, TU_ARRAY_SIZE(config));
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
