@@ -14,15 +14,17 @@ static void send_hid_report(uint8_t report_id, uint32_t btn);
 
 static input_config_t config[] = {
   {
-      .input = 0,
+      .input = 1,
       .output = 1,
       .input_pin = 2,
-      .output_pin = -1,
+      .output_pin = 26, // A0
       .mode = DIRECT,
   }
 };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
+static my_hid_report_output_data_t hid_incoming_data;
+
 
 int main(void)
 {
@@ -52,7 +54,7 @@ int main(void)
         bool dirty = inputs_task(&inputs);
 
         hid_task(dirty, &inputs);
-        led_task(led_state);
+        led_task(config, TU_ARRAY_SIZE(config), led_state, hid_incoming_data.leds);
     }
 
     // indicate no error
@@ -167,9 +169,9 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
                 return;
             }
 
-            my_hid_report_output_data_t* data = (my_hid_report_output_data_t*)buffer;
+            hid_incoming_data = *(my_hid_report_output_data_t*)buffer;
 
-            printf("got data %02X\n", (uint8_t)(data->leds & 0xff));
+            printf("got data %02X\n", (uint8_t)(hid_incoming_data.leds & 0xff));
         } else {
             printf("got unexpected output repoort for id %d", report_id);
         }

@@ -13,7 +13,7 @@ void gpio_irq(uint gpio, uint32_t event_mask) {
     (void)gpio;
     (void)event_mask;
 
-    sw = (event_mask & GPIO_IRQ_EDGE_RISE);
+    sw = (event_mask & GPIO_IRQ_EDGE_FALL);
     dirty = true;
 
 }

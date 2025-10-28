@@ -13,6 +13,6 @@ typedef enum  {
 } led_state_t;
 
 int led_init(const input_config_t config[], size_t len);
-int led_task(led_state_t state);
+int led_task(const input_config_t config[], size_t len, led_state_t state, uint32_t inputs);
 
 #endif // LED_H
