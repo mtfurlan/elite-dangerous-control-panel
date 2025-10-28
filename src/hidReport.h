@@ -5,31 +5,34 @@
 
 
 #define MY_REPORT_DESC_GAMEPAD_BUTTONS(...) \
-  HID_USAGE_PAGE ( HID_USAGE_PAGE_SIMULATE     )                 ,\
-  HID_USAGE      ( 0x04  /* spaceship */ )                 ,\
+  HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP     )                 ,\
+  HID_USAGE      ( HID_USAGE_DESKTOP_JOYSTICK )                 ,\
   HID_COLLECTION ( HID_COLLECTION_APPLICATION )                 ,\
     /* Report ID if any */\
     __VA_ARGS__ \
-    HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP     )                 ,\
-    HID_USAGE      ( HID_USAGE_DESKTOP_JOYSTICK )                 ,\
-    HID_COLLECTION ( HID_COLLECTION_APPLICATION )                 ,\
-      /* 32 bit Button Map */ \
-      HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ) ,\
-      HID_USAGE_MIN      ( 1                                      ) ,\
-      HID_USAGE_MAX      ( 32                                     ) ,\
-      HID_LOGICAL_MIN    ( 0                                      ) ,\
-      HID_LOGICAL_MAX    ( 1                                      ) ,\
-      HID_REPORT_COUNT   ( 32                                     ) ,\
-      HID_REPORT_SIZE    ( 1                                      ) ,\
-      HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
-    HID_COLLECTION_END                                            , \
+    HID_USAGE      ( HID_USAGE_DESKTOP_POINTER )                   ,\
+    /* 32 bit Button Map */ \
+    HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ) ,\
+    HID_USAGE_MIN      ( 1                                      ) ,\
+    HID_USAGE_MAX      ( 32                                     ) ,\
+    HID_LOGICAL_MIN    ( 0                                      ) ,\
+    HID_LOGICAL_MAX    ( 1                                      ) ,\
+    HID_REPORT_COUNT   ( 32                                     ) ,\
+    HID_REPORT_SIZE    ( 1                                      ) ,\
+    HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
     /* 32 bit output */ \
     HID_USAGE_PAGE_N  ( 0xFF42, 2                   )       ,\
-      HID_LOGICAL_MIN    ( 0                                      ) ,\
-      HID_LOGICAL_MAX    ( 1                                      ) ,\
-      HID_REPORT_COUNT   ( 32                                     ) ,\
-      HID_REPORT_SIZE    ( 1                                      ) ,\
-      HID_OUTPUT       ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE  ) ,\
+    /* HID_USAGE is reported as Warning: Undocumented usage by hidrdd */ \
+    /* but without it, windows says (sic)*/ \
+    /* This device cannot start. (Code 10) */ \
+    /* A non constant main item was declaired without a corresponding usage. */ \
+    HID_USAGE_MIN      ( 1                                      ) ,\
+    HID_USAGE_MAX      ( 32                                     ) ,\
+    HID_LOGICAL_MIN    ( 0                                      ) ,\
+    HID_LOGICAL_MAX    ( 1                                      ) ,\
+    HID_REPORT_COUNT   ( 32                                     ) ,\
+    HID_REPORT_SIZE    ( 1                                      ) ,\
+    HID_OUTPUT       ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE  ) ,\
   HID_COLLECTION_END \
 
 
