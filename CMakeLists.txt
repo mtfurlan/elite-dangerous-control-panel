@@ -17,8 +17,8 @@ add_executable(projectThing)
 
 target_sources(projectThing PUBLIC
         src/main.cpp
-        src/led.c
-        src/inputs.c
+        src/led.cpp
+        src/inputs.cpp
         src/usb_descriptors.c
         )
 

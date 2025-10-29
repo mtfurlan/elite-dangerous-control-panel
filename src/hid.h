@@ -1,8 +1,5 @@
 #ifndef HID_H
 #define HID_H
-#ifdef __cplusplus
- extern "C" {
-#endif
 
 #include <stdint.h>
 
@@ -51,7 +48,4 @@ typedef struct __attribute__ ((packed))
 
 
 
-#ifdef __cplusplus
- }
-#endif
 #endif // HIDREPORT_H
