@@ -36,3 +36,9 @@ target_compile_definitions(projectThing PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATIO
 
 pico_enable_stdio_usb(projectThing 1)
 pico_add_extra_outputs(projectThing)
+
+
+add_subdirectory(vendor/adamboardman-pico-interfaces)
+add_subdirectory(vendor/adamboardman-pico-mcp23017)
+
+target_link_libraries(projectThing PRIVATE pico_mcp23017)
