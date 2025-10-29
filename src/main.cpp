@@ -3,12 +3,24 @@
 #include <bsp/board_api.h>
 #include <tusb.h>
 #include <pico/stdio.h>
+#include <hardware/i2c.h>
+
+#include <mcp23017.h>
 
 #include "usb_descriptors.h"
 #include "led.h"
-#include "inputs.h"
+#include "buttons.h"
 #include "config.h"
 #include "hid.h"
+
+
+#define MCP_INPUT 0x20
+#define MCP_OUTPUT 0x27
+#define MCP_INPUT_IRQ_PIN 6
+
+
+#define I2C_GPIO_PIN_SDA 4
+#define I2C_GPIO_PIN_SCL 5
 
 
 
@@ -37,8 +49,17 @@ int main(void)
     board_init();
     tusb_init();
 
+
+
+	i2c_init(i2c0, 400000);
+	gpio_set_function(I2C_GPIO_PIN_SDA, GPIO_FUNC_I2C);
+	gpio_set_function(I2C_GPIO_PIN_SCL, GPIO_FUNC_I2C);
+	gpio_pull_up(I2C_GPIO_PIN_SDA);
+	gpio_pull_up(I2C_GPIO_PIN_SCL);
+
+    buttons_init(MCP_INPUT_IRQ_PIN, i2c0, MCP_INPUT);
+
     led_init(config, TU_ARRAY_SIZE(config));
-    inputs_init(config, TU_ARRAY_SIZE(config));
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -54,7 +75,7 @@ int main(void)
         // TinyUSB device task | must be called regurlarly
         tud_task();
 
-        bool dirty = inputs_task(&inputs);
+        bool dirty = buttons_task(&inputs);
 
         hid_task(dirty, &inputs);
         led_task(config, TU_ARRAY_SIZE(config), led_state, hid_incoming_data.leds);
