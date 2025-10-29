@@ -1,5 +1,8 @@
-#ifndef HIDREPORT_H
-#define HIDREPORT_H
+#ifndef HID_H
+#define HID_H
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 #include <stdint.h>
 
@@ -38,7 +41,7 @@
 
 typedef struct __attribute__ ((packed))
 {
-  uint32_t buttons;  ///< Buttons mask for currently pressed buttons
+  uint32_t buttons;
 } my_hid_report_gamepad_buttons_t;
 
 typedef struct __attribute__ ((packed))
@@ -48,4 +51,7 @@ typedef struct __attribute__ ((packed))
 
 
 
+#ifdef __cplusplus
+ }
+#endif
 #endif // HIDREPORT_H

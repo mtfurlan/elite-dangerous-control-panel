@@ -16,7 +16,7 @@ pico_sdk_init()
 add_executable(projectThing)
 
 target_sources(projectThing PUBLIC
-        src/main.c
+        src/main.cpp
         src/led.c
         src/inputs.c
         src/usb_descriptors.c

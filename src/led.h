@@ -1,5 +1,8 @@
 #ifndef LED_H
 #define LED_H
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 #include "config.h"
 
@@ -15,4 +18,7 @@ typedef enum  {
 int led_init(const input_config_t config[], size_t len);
 int led_task(const input_config_t config[], size_t len, led_state_t state, uint32_t inputs);
 
+#ifdef __cplusplus
+ }
+#endif
 #endif // LED_H

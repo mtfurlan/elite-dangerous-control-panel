@@ -8,6 +8,9 @@
 #include "led.h"
 #include "inputs.h"
 #include "config.h"
+#include "hid.h"
+
+
 
 void hid_task(bool dirty, uint32_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
@@ -262,4 +265,3 @@ void tud_cdc_rx_cb(uint8_t itf)
         tud_cdc_n_write_flush(itf);
     }
 }
-

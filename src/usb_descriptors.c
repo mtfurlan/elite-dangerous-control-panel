@@ -9,6 +9,8 @@
 #include <tusb.h>
 #include <bsp/board_api.h>
 
+#include "hid.h"
+
 // set some example Vendor and Product ID
 // the board will use to identify at the host
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
