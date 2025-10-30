@@ -37,6 +37,16 @@ target_compile_definitions(projectThing PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATIO
 pico_enable_stdio_usb(projectThing 1)
 pico_add_extra_outputs(projectThing)
 
+# Enable the reset interface
+target_compile_definitions(projectThing PUBLIC
+        PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE=1
+        # use SDK MS_OS_20 descriptor, as this doesn't have a custom one
+        PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_MS_OS_20_DESCRIPTOR=1
+        # pass the interface number to the SDK MS_OS_20 descriptor
+        PICO_STDIO_USB_RESET_INTERFACE_MS_OS_20_DESCRIPTOR_ITF=3
+        )
+
+
 
 add_subdirectory(vendor/adamboardman-pico-interfaces)
 add_subdirectory(vendor/adamboardman-pico-mcp23017)

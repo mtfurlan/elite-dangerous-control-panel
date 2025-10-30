@@ -7,6 +7,7 @@
 #include "usb_descriptors.h"
 
 #include <bsp/board_api.h>
+#include <pico/usb_reset_interface_device.h>
 #include <tusb.h>
 
 #include "hid.h"
@@ -28,6 +29,7 @@ enum {
     STRID_SERIAL,       // 3: Serials
     STRID_CDC,          // 4: CDC Interface 0
     STRID_HID,          // 5: hid
+    STRID_RPI_RESET,    // 6: reset Interface
 };
 
 // array of pointer to string descriptors
@@ -39,6 +41,7 @@ char const* string_desc_arr[] = {
     NULL,                            // 3: Serials (null so it uses unique ID if available)
     "stdio"                          // 4: CDC Interface 0
     "TinyUSB hid stuff"              // 5: HIDs Interface
+    "picotool reset"                 // 5: Reset Interface
 };
 
 
@@ -84,11 +87,16 @@ uint8_t const desc_hid_report[] = {
 uint8_t const* tud_hid_descriptor_report_cb(uint8_t instance);
 
 
-enum { ITF_NUM_CDC = 0, ITF_NUM_CDC_DATA, ITF_NUM_HID, ITF_NUM_TOTAL };
+enum { ITF_NUM_CDC = 0, ITF_NUM_CDC_DATA, ITF_NUM_HID, ITF_NUM_RPI_RESET, ITF_NUM_TOTAL };
+
+static_assert(
+        ITF_NUM_RPI_RESET == PICO_STDIO_USB_RESET_INTERFACE_MS_OS_20_DESCRIPTOR_ITF,
+        "ITF_NUM_RPI_RESET must be equal to the PICO_STDIO_USB_RESET_INTERFACE_MS_OS_20_DESCRIPTOR_ITF set in CMakeLists.txt");
 
 // total length of configuration descriptor
-#define CONFIG_TOTAL_LEN \
-    (TUD_CONFIG_DESC_LEN + CFG_TUD_CDC * TUD_CDC_DESC_LEN + TUD_HID_DESC_LEN)
+#define CONFIG_TOTAL_LEN                                                     \
+    (TUD_CONFIG_DESC_LEN + CFG_TUD_CDC * TUD_CDC_DESC_LEN + TUD_HID_DESC_LEN \
+     + TUD_RPI_RESET_DESC_LEN)
 
 // define endpoint numbers
 #define EPNUM_CDC_NOTIF 0x81 // notification endpoint for CDC 0
@@ -119,6 +127,9 @@ uint8_t const desc_configuration[] = {
                        EPNUM_HID,
                        CFG_TUD_HID_EP_BUFSIZE,
                        10),
+
+    // RPi Reset Interface
+    TUD_RPI_RESET_DESCRIPTOR(ITF_NUM_RPI_RESET, STRID_RPI_RESET),
 };
 
 // called when host requests to get configuration descriptor
