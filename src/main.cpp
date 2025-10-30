@@ -28,10 +28,7 @@ static void send_hid_report(uint8_t report_id, uint32_t btn);
 
 typedef enum {
     DIRECT, // output inputPin directly
-    SMART_BTN, // do maths on input and output to decide what to do to pretend to be a toggle button
-    //RISING, // send events on rising edge
-    //FALLING, // send events on falling edge
-    //OPTIMISTIC_SW, act as a switch and set LED based on that
+    SMART, // use a toggle switch, pretend to be button based on input state
 } input_mode_t;
 
 typedef struct {
@@ -41,6 +38,7 @@ typedef struct {
     int led_pin; // -1 is disabled
                     // TODO: direction?
     input_mode_t mode;
+    uint32_t smart_millis;
 } input_config_t;
 
 static input_config_t config[] = {
@@ -49,7 +47,7 @@ static input_config_t config[] = {
       .output_bit = 1,
       .button_pin = 0,
       .led_pin = 15,
-      .mode = DIRECT,
+      .mode = SMART,
   }
 };
 
@@ -89,6 +87,15 @@ int main(void)
     // let pico sdk use the first cdc interface for std io
     stdio_init_all();
 
+    for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+        input_config_t* c = &config[i];
+        c->smart_millis = 0;
+        if(c->mode == SMART && (c->input_bit == 0 || c->output_bit == 0)) {
+            printf("config %d not valid, mode is SMART but doesn't have input or output\n", i);
+            err |= 1;
+        }
+    }
+
     if(err) {
         printf("failed to init: %d\n", err);
         while(true) {
@@ -120,10 +127,21 @@ int main(void)
                             // just set output to button state
                             output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
                             break;
-                        case SMART_BTN:
+                        case SMART:
+                            // cases:
+                            //   millis set, and millis timeout
+                            //     unpush hid, unset millis
+                            //   no millis
+                            //     button xor led
+                            //       push hid set millis
+                            //       TODO: retry count so we don't spam?
+                            //
                             // if button xor led, trigger a little
                             if(GET_BUTTON_STATE(c, button_data) ^ GET_LED_STATE(c, hid_incoming_data.leds)) {
-                                output |= SET_OUTPUT_BIT(c, 1); //TODO: trigger a duratin then turn off
+                                //if(c->smart_millis != 0 && GET_BUTTON_STATE(c, button_data)) {
+                                //    c->smart_millis = board_millis();
+                                //if ( board_millis() - start_ms < 100) return; // not enough time
+                                //output |= SET_OUTPUT_BIT(c, 1); //TODO: trigger a duratin then turn off
                             }
                             break;
                     }
