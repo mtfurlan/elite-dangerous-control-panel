@@ -24,7 +24,7 @@
 
 
 
-void hid_task(bool dirty, uint32_t* inputs);
+void hid_task(bool dirty, uint16_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
 
 static input_config_t config[] = {
@@ -44,7 +44,7 @@ static my_hid_report_output_data_t hid_incoming_data;
 int main(void)
 {
 
-    static uint32_t inputs = 0;
+    static uint16_t inputs = 0;
     // Initialize TinyUSB stack
     board_init();
     tusb_init();
@@ -125,7 +125,7 @@ void tud_resume_cb(void)
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
 static uint8_t btn;
-void hid_task(bool dirty, uint32_t* inputs)
+void hid_task(bool dirty, uint16_t* inputs)
 {
     btn = *inputs;
     // Poll every 10ms
