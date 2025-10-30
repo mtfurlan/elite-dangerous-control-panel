@@ -244,7 +244,7 @@ lint() {
             rm -f "$patch"
 
             if [ "$staged" == true ]; then
-                git diff -U0 --no-color --staged "$file" | clang-format-diff -style file:.clang-format -p1 > "$patch"
+                (git diff -U0 --no-color --staged "$file" | clang-format-diff -style file:.clang-format -p1 || true) > "$patch"
             else
                 lintedFile=$(mktemp)
                 lintedFiles+=("$lintedFile")
