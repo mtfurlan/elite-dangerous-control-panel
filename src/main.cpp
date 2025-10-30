@@ -31,8 +31,8 @@ static input_config_t config[] = {
   {
       .input = 1,
       .output = 1,
-      .input_pin = 2,
-      .output_pin = 26, // A0
+      .input_pin = 0,
+      .output_pin = 15,
       .mode = DIRECT,
   }
 };
@@ -41,10 +41,14 @@ static led_state_t led_state = BLINK_NOT_MOUNTED;
 static my_hid_report_output_data_t hid_incoming_data;
 
 
+#define GET_BUTTON_STATE(c, i) (i & (1 << c->input_pin))
+#define SET_OUTPUT_BIT(c, val)  ((val & 0x1) << (c->output - 1))
+#define GET_LED_STATE(c, i) (i & (1 << c->output_pin))
+#define GET_LED_INPUT(c, i) (i & (1 << (c->input - 1)))
+#define SET_LED_BIT(c, val)  ((val & 0x1) << (c->output_pin))
 int main(void)
 {
 
-    static uint16_t inputs = 0;
     // Initialize TinyUSB stack
     board_init();
     tusb_init();
@@ -70,18 +74,57 @@ int main(void)
     stdio_init_all();
 
     printf("hello running");
+    uint16_t button_data = 0;
+    uint16_t output;
+    uint16_t led_data;
     // main run loop
     while (1) {
         // TinyUSB device task | must be called regurlarly
         tud_task();
 
-        bool dirty = buttons_task(&inputs);
+        bool dirty = buttons_task(&button_data);
 
-        hid_task(dirty, &inputs);
-        (void)config;
         // input data: hid_incoming_data.leds
-        // switch state: inputs
-        led_task(led_state, hid_incoming_data.leds);
+        // switch state: button_data
+        if(dirty) {
+            output = 0;
+            for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+                input_config_t* c = &config[i];
+                if(c->output != 0 && c->input_pin >= 0) {
+                    switch(c->mode) {
+                        case DIRECT:
+                            // just set output to button state
+                            output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
+                            break;
+                        case SMART_BTN:
+                            // if button xor led, trigger a little
+                            if(GET_BUTTON_STATE(c, button_data) ^ GET_LED_STATE(c, hid_incoming_data.leds)) {
+                                output |= SET_OUTPUT_BIT(c, 1); //TODO: trigger a duratin then turn off
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+        hid_task(dirty, &output);
+
+        led_data = 0;
+        for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+            input_config_t* c = &config[i];
+            if(c->input != 0 && c->output_pin >= 0) {
+                led_data |= SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds));
+                printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
+                        hid_incoming_data.leds,
+                        i,
+                        c->input,
+                        GET_LED_INPUT(c, hid_incoming_data.leds),
+                        c->output_pin,
+                        SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds)),
+                        led_data);
+            }
+        }
+
+        led_task(led_state, led_data);
     }
 
     // indicate no error
