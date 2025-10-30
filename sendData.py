@@ -32,6 +32,6 @@ with hid.Device(vid, pid) as h:
     #print(f'Device manufacturer: {h.manufacturer}')
     #print(f'Product: {h.product}')
     #print(f'Serial Number: {h.serial}')
-    h.write(bytes([report_id, lights, 0, 0, 0]))
+    h.write(bytes([report_id, lights, 0]))
 
     #h.send_feature_report(bytes([0x00, 0x42, 0x55, 0x32]))

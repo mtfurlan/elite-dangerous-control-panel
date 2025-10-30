@@ -46,14 +46,14 @@ typedef struct {
 } input_config_t;
 
 static input_config_t config[] = { {
-                                           .input_bit = 1,
+                                           .input_bit = 2,
                                            .output_bit = 1,
                                            .button_pin = 0,
                                            .led_pin = 15,
                                            .mode = DIRECT,
                                    },
                                    {
-                                           .input_bit = 2,
+                                           .input_bit = 1,
                                            .output_bit = 2,
                                            .button_pin = 1,
                                            .led_pin = 14,
@@ -72,7 +72,7 @@ static my_hid_report_output_data_t hid_incoming_data;
 
 
 #define SMART_BUTTON_PRESS    100
-#define SMART_BUTTON_COOLDOWN 500
+#define SMART_BUTTON_COOLDOWN 1500 // TODO retune after improving python script
 #define SMART_BUTTON_RETRY    3
 
 /*
