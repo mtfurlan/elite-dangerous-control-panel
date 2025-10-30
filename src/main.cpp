@@ -1,20 +1,20 @@
 #include <stdlib.h>
 
 #include <bsp/board_api.h>
-#include <tusb.h>
-#include <pico/stdio.h>
 #include <hardware/i2c.h>
+#include <pico/stdio.h>
+#include <tusb.h>
 
 #include <mcp23017.h>
 
-#include "usb_descriptors.h"
-#include "led.h"
 #include "buttons.h"
 #include "hid.h"
+#include "led.h"
+#include "usb_descriptors.h"
 
 
-#define MCP_INPUT 0x20
-#define MCP_OUTPUT 0x27
+#define MCP_INPUT         0x20
+#define MCP_OUTPUT        0x27
 #define MCP_INPUT_IRQ_PIN 6
 
 
@@ -22,51 +22,46 @@
 #define I2C_GPIO_PIN_SCL 5
 
 
-
 void hid_task(bool dirty, uint16_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
 
 typedef enum {
     DIRECT, // output inputPin directly
-    SMART, // use a toggle switch, pretend to be button based on input state
+    SMART,  // use a toggle switch, pretend to be button based on input state
 } input_mode_t;
 
 typedef struct {
-    uint8_t input_bit; // 1-32, 0 is no input
+    uint8_t input_bit;  // 1-32, 0 is no input
     uint8_t output_bit; // joy btn 1-32, 0 no output
     int button_pin; // -1 is disabled // TODO: inputPin is tied to output number, seems confusing
-    int led_pin; // -1 is disabled
+    int led_pin;    // -1 is disabled
                     // TODO: direction?
     input_mode_t mode;
     uint32_t smart_millis;
 } input_config_t;
 
-static input_config_t config[] = {
-  {
-      .input_bit = 1,
-      .output_bit = 1,
-      .button_pin = 0,
-      .led_pin = 15,
-      .mode = SMART,
-  }
-};
+static input_config_t config[] = { {
+        .input_bit = 1,
+        .output_bit = 1,
+        .button_pin = 0,
+        .led_pin = 15,
+        .mode = SMART,
+} };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static my_hid_report_output_data_t hid_incoming_data;
 
 
 #define GET_BUTTON_STATE(c, i) (i & (1 << c->button_pin))
-#define SET_OUTPUT_BIT(c, val)  ((val & 0x1) << (c->output_bit - 1))
-#define GET_LED_STATE(c, i) (i & (1 << c->led_pin))
-#define GET_LED_INPUT(c, i) (i & (1 << (c->input_bit - 1)))
-#define SET_LED_BIT(c, val)  ((val & 0x1) << (c->led_pin))
+#define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->output_bit - 1))
+#define GET_LED_STATE(c, i)    (i & (1 << c->led_pin))
+#define GET_LED_INPUT(c, i)    (i & (1 << (c->input_bit - 1)))
+#define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin))
 int main(void)
 {
-
     // Initialize TinyUSB stack
     board_init();
     tusb_init();
-
 
 
     i2c_init(i2c0, 400000);
@@ -87,18 +82,18 @@ int main(void)
     // let pico sdk use the first cdc interface for std io
     stdio_init_all();
 
-    for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+    for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
         input_config_t* c = &config[i];
         c->smart_millis = 0;
-        if(c->mode == SMART && (c->input_bit == 0 || c->output_bit == 0)) {
+        if (c->mode == SMART && (c->input_bit == 0 || c->output_bit == 0)) {
             printf("config %d not valid, mode is SMART but doesn't have input or output\n", i);
             err |= 1;
         }
     }
 
-    if(err) {
+    if (err) {
         printf("failed to init: %d\n", err);
-        while(true) {
+        while (true) {
             tud_task();
             led_error();
         }
@@ -117,12 +112,12 @@ int main(void)
 
         // input data: hid_incoming_data.leds
         // switch state: button_data
-        if(dirty) {
+        if (dirty) {
             output = 0;
-            for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+            for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
                 input_config_t* c = &config[i];
-                if(c->output_bit != 0 && c->button_pin >= 0) {
-                    switch(c->mode) {
+                if (c->output_bit != 0 && c->button_pin >= 0) {
+                    switch (c->mode) {
                         case DIRECT:
                             // just set output to button state
                             output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
@@ -137,7 +132,8 @@ int main(void)
                             //       TODO: retry count so we don't spam?
                             //
                             // if button xor led, trigger a little
-                            if(GET_BUTTON_STATE(c, button_data) ^ GET_LED_STATE(c, hid_incoming_data.leds)) {
+                            if (GET_BUTTON_STATE(c, button_data)
+                                ^ GET_LED_STATE(c, hid_incoming_data.leds)) {
                                 //if(c->smart_millis != 0 && GET_BUTTON_STATE(c, button_data)) {
                                 //    c->smart_millis = board_millis();
                                 //if ( board_millis() - start_ms < 100) return; // not enough time
@@ -151,9 +147,9 @@ int main(void)
         hid_task(dirty, &output);
 
         led_data = 0;
-        for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+        for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
             input_config_t* c = &config[i];
-            if(c->input_bit != 0 && c->led_pin >= 0) {
+            if (c->input_bit != 0 && c->led_pin >= 0) {
                 led_data |= SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds));
                 //printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
                 //        hid_incoming_data.leds,
@@ -194,7 +190,7 @@ void tud_umount_cb(void)
 // Within 7ms, device must draw an average of current less than 2.5 mA from bus
 void tud_suspend_cb(bool remote_wakeup_en)
 {
-    (void) remote_wakeup_en;
+    (void)remote_wakeup_en;
     led_state = BLINK_SUSPENDED;
 }
 
@@ -217,19 +213,17 @@ void hid_task(bool dirty, uint16_t* inputs)
     const uint32_t interval_ms = 10;
     static uint32_t start_ms = 0;
 
-    if (!dirty && ( board_millis() - start_ms < interval_ms)) {
+    if (!dirty && (board_millis() - start_ms < interval_ms)) {
         return; // not enough time
     }
     start_ms += interval_ms;
 
     // Remote wakeup
-    if ( tud_suspended() && btn )
-    {
+    if (tud_suspended() && btn) {
         // Wake up host if we are in suspend mode
         // and REMOTE_WAKEUP feature is enabled by host
         tud_remote_wakeup();
-    }else
-    {
+    } else {
         // Send the 1st of report chain, the rest will be sent by tud_hid_report_complete_cb()
         send_hid_report(REPORT_ID_GAMEPAD, btn);
     }
@@ -240,13 +234,12 @@ void hid_task(bool dirty, uint16_t* inputs)
 // Note: For composite reports, report[0] is report ID
 void tud_hid_report_complete_cb(uint8_t instance, uint8_t const* report, uint16_t len)
 {
-    (void) instance;
-    (void) len;
+    (void)instance;
+    (void)len;
 
     uint8_t next_report_id = report[0] + 1u;
 
-    if (next_report_id < REPORT_ID_COUNT)
-    {
+    if (next_report_id < REPORT_ID_COUNT) {
         send_hid_report(next_report_id, btn);
     }
 }
@@ -254,30 +247,40 @@ void tud_hid_report_complete_cb(uint8_t instance, uint8_t const* report, uint16_
 // Invoked when received GET_REPORT control request
 // Application must fill buffer report's content and return its length.
 // Return zero will cause the stack to STALL request
-uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t* buffer, uint16_t reqlen)
+uint16_t tud_hid_get_report_cb(uint8_t instance,
+                               uint8_t report_id,
+                               hid_report_type_t report_type,
+                               uint8_t* buffer,
+                               uint16_t reqlen)
 {
     // TODO not Implemented
-    (void) instance;
-    (void) report_id;
-    (void) report_type;
-    (void) buffer;
-    (void) reqlen;
+    (void)instance;
+    (void)report_id;
+    (void)report_type;
+    (void)buffer;
+    (void)reqlen;
 
     return 0;
 }
 
 // Invoked when received SET_REPORT control request or
 // received data on OUT endpoint ( Report ID = 0, Type = 0 )
-void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const* buffer, uint16_t bufsize)
+void tud_hid_set_report_cb(uint8_t instance,
+                           uint8_t report_id,
+                           hid_report_type_t report_type,
+                           uint8_t const* buffer,
+                           uint16_t bufsize)
 {
-    (void) instance;
+    (void)instance;
 
     if (report_type == HID_REPORT_TYPE_OUTPUT) {
         // Set keyboard LED e.g Capslock, Numlock etc...
         if (report_id == REPORT_ID_GAMEPAD) {
             // bufsize should be (at least) 1
-            if ( bufsize != sizeof(my_hid_report_output_data_t)) {
-                printf("got a weird size data from hid, reporrt id %d, size %d\n", report_id, bufsize);
+            if (bufsize != sizeof(my_hid_report_output_data_t)) {
+                printf("got a weird size data from hid, reporrt id %d, size %d\n",
+                       report_id,
+                       bufsize);
                 return;
             }
 
@@ -293,54 +296,51 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 static void send_hid_report(uint8_t report_id, uint32_t btn)
 {
     // skip if hid is not ready yet
-    if ( !tud_hid_ready() ) return;
+    if (!tud_hid_ready())
+        return;
 
-    switch(report_id)
-    {
-        case REPORT_ID_KEYBOARD:
-            {
-                // use to avoid send multiple consecutive zero report for keyboard
-                static bool has_keyboard_key = false;
+    switch (report_id) {
+        case REPORT_ID_KEYBOARD: {
+            // use to avoid send multiple consecutive zero report for keyboard
+            static bool has_keyboard_key = false;
 
-                if ( false && btn )
-                {
-                    uint8_t keycode[6] = { 0 };
-                    keycode[0] = HID_KEY_A;
+            if (false && btn) {
+                uint8_t keycode[6] = { 0 };
+                keycode[0] = HID_KEY_A;
 
-                    tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
-                    has_keyboard_key = true;
-                }else {
-                    // send empty key report if previously has key pressed
-                    if (has_keyboard_key) tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-                    has_keyboard_key = false;
-                }
+                tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
+                has_keyboard_key = true;
+            } else {
+                // send empty key report if previously has key pressed
+                if (has_keyboard_key)
+                    tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
+                has_keyboard_key = false;
             }
-            break;
+        } break;
 
-        case REPORT_ID_GAMEPAD:
-            {
-                // use to avoid send multiple consecutive zero report for keyboard
-                static bool has_gamepad_key = false;
+        case REPORT_ID_GAMEPAD: {
+            // use to avoid send multiple consecutive zero report for keyboard
+            static bool has_gamepad_key = false;
 
-                my_hid_report_gamepad_buttons_t report = {
-                //hid_gamepad_report_t report = {
-                    .buttons = 0
-                };
+            my_hid_report_gamepad_buttons_t report = { //hid_gamepad_report_t report = {
+                                                       .buttons = 0
+            };
 
-                if ( btn ) {
-                    report.buttons = 0x1;
+            if (btn) {
+                report.buttons = 0x1;
+                tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
+
+                has_gamepad_key = true;
+            } else {
+                report.buttons = 0;
+                if (has_gamepad_key)
                     tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
-
-                    has_gamepad_key = true;
-                } else {
-                    report.buttons = 0;
-                    if (has_gamepad_key) tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
-                    has_gamepad_key = false;
-                }
+                has_gamepad_key = false;
             }
-            break;
+        } break;
 
-        default: break;
+        default:
+            break;
     }
 }
 
@@ -370,7 +370,7 @@ void tud_cdc_rx_cb(uint8_t itf)
         printf("Received on CDC 1: %s\n", buf);
 
         // and echo back OK on CDC 1
-        tud_cdc_n_write(itf, (uint8_t const *) "OK\r\n", 4);
+        tud_cdc_n_write(itf, (uint8_t const*)"OK\r\n", 4);
         tud_cdc_n_write_flush(itf);
     }
 }

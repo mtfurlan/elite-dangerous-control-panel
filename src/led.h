@@ -1,10 +1,10 @@
 #ifndef LED_H
 #define LED_H
 
-#include <stddef.h>
 #include <mcp23017.h>
+#include <stddef.h>
 
-typedef enum  {
+typedef enum {
     BLINK_NOT_OFF = 0,
     BLINK_NOT_MOUNTED = 250,
     BLINK_MOUNTED = 1000,

@@ -2,8 +2,8 @@
 #define BUTTONS_H
 
 #include <pico/stdlib.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include <mcp23017.h>
 

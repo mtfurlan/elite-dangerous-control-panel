@@ -2,8 +2,7 @@
 #define USB_DESCRIPTORS_H
 
 
-enum
-{
+enum {
     REPORT_ID_GAMEPAD = 1,
     REPORT_ID_KEYBOARD,
     REPORT_ID_COUNT,

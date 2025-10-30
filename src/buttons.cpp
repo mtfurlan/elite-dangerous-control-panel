@@ -13,7 +13,8 @@ static Mcp23017* mcp_0;
  * gpio: pin number triggering
  * event_mask: enum gpio_irq_level
  */
-void mcp_irq(uint gpio, uint32_t event_mask) {
+void mcp_irq(uint gpio, uint32_t event_mask)
+{
     (void)gpio;
 
     if (event_mask & GPIO_IRQ_EDGE_FALL) {
@@ -34,7 +35,7 @@ int buttons_init(uint interrupt_pin, i2c_inst* i2c, uint8_t addr)
     result |= mcp_0->set_interrupt_type(0x0000); // will interrupt on both edges
     result |= mcp_0->enable_interrupt(0xFFFF);
 
-    if(result) {
+    if (result) {
         printf("failed to init buttons mcp\n");
         return 1;
     }
@@ -46,7 +47,7 @@ int buttons_init(uint interrupt_pin, i2c_inst* i2c, uint8_t addr)
 
 bool buttons_task(uint16_t* inputs)
 {
-    if(interrupt_mcp) {
+    if (interrupt_mcp) {
         interrupt_mcp = false;
         mcp_0->update_and_get_input_values();
         *inputs = 0;

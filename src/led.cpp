@@ -1,7 +1,7 @@
 #include "led.h"
 
-#include <pico/stdlib.h>
 #include <bsp/board_api.h>
+#include <pico/stdlib.h>
 
 #define LED_R 18
 #define LED_G 19
@@ -32,7 +32,7 @@ int led_init(i2c_inst* i2c, uint8_t addr)
     result |= mcp_0->set_io_direction(0x0000);
     result |= mcp_0->set_pullup(0xFFFF);
 
-    if(result) {
+    if (result) {
         printf("failed to init led mcp\n");
         return 1;
     }
@@ -41,19 +41,21 @@ int led_init(i2c_inst* i2c, uint8_t addr)
 
 int led_task(led_state_t state, uint16_t states)
 {
-    if(~states != mcp_0->get_output()) {
+    if (~states != mcp_0->get_output()) {
         mcp_0->set_all_output_bits(~states);
     }
 
-  // TODO state handling better
+    // TODO state handling better
     static uint32_t start_ms = 0;
     static bool led_state = false;
 
     // blink is disabled
-    if (!state) return 0;
+    if (!state)
+        return 0;
 
     // Blink every interval ms
-    if ( board_millis() - start_ms < state) return 0; // not enough time
+    if (board_millis() - start_ms < state)
+        return 0; // not enough time
     start_ms += state;
 
     gpio_put(LED_R, led_state);
@@ -67,7 +69,8 @@ void led_error(void)
     static bool led_state = false;
 
     // Blink every interval ms
-    if ( board_millis() - start_ms < 100) return; // not enough time
+    if (board_millis() - start_ms < 100)
+        return; // not enough time
     start_ms += 100;
 
     gpio_put(LED_R, led_state);
