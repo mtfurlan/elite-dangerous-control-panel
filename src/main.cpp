@@ -77,9 +77,9 @@ int main(void)
     gpio_pull_up(I2C_GPIO_PIN_SDA);
     gpio_pull_up(I2C_GPIO_PIN_SCL);
 
-    buttons_init(MCP_INPUT_IRQ_PIN, i2c0, MCP_INPUT);
-
-    led_init(i2c0, MCP_OUTPUT);
+    int err = 0;
+    err |= buttons_init(MCP_INPUT_IRQ_PIN, i2c0, MCP_INPUT);
+    err |= led_init(i2c0, MCP_OUTPUT);
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -88,6 +88,14 @@ int main(void)
 
     // let pico sdk use the first cdc interface for std io
     stdio_init_all();
+
+    if(err) {
+        printf("failed to init: %d\n", err);
+        while(true) {
+            tud_task();
+            led_error();
+        }
+    }
 
     printf("hello running");
     uint16_t button_data = 0;

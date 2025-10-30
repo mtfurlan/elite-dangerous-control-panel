@@ -60,3 +60,16 @@ int led_task(led_state_t state, uint16_t states)
     led_state = 1 - led_state; // toggle
     return 0;
 }
+
+void led_error(void)
+{
+    static uint32_t start_ms = 0;
+    static bool led_state = false;
+
+    // Blink every interval ms
+    if ( board_millis() - start_ms < 100) return; // not enough time
+    start_ms += 100;
+
+    gpio_put(LED_R, led_state);
+    led_state = 1 - led_state; // toggle
+}
