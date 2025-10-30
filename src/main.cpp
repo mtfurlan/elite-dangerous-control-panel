@@ -10,7 +10,6 @@
 #include "usb_descriptors.h"
 #include "led.h"
 #include "buttons.h"
-#include "config.h"
 #include "hid.h"
 
 
@@ -27,12 +26,29 @@
 void hid_task(bool dirty, uint16_t* inputs);
 static void send_hid_report(uint8_t report_id, uint32_t btn);
 
+typedef enum {
+    DIRECT, // output inputPin directly
+    SMART_BTN, // do maths on input and output to decide what to do to pretend to be a toggle button
+    //RISING, // send events on rising edge
+    //FALLING, // send events on falling edge
+    //OPTIMISTIC_SW, act as a switch and set LED based on that
+} input_mode_t;
+
+typedef struct {
+    uint8_t input_bit; // 1-32, 0 is no input
+    uint8_t output_bit; // joy btn 1-32, 0 no output
+    int button_pin; // -1 is disabled // TODO: inputPin is tied to output number, seems confusing
+    int led_pin; // -1 is disabled
+                    // TODO: direction?
+    input_mode_t mode;
+} input_config_t;
+
 static input_config_t config[] = {
   {
-      .input = 1,
-      .output = 1,
-      .input_pin = 0,
-      .output_pin = 15,
+      .input_bit = 1,
+      .output_bit = 1,
+      .button_pin = 0,
+      .led_pin = 15,
       .mode = DIRECT,
   }
 };
@@ -41,11 +57,11 @@ static led_state_t led_state = BLINK_NOT_MOUNTED;
 static my_hid_report_output_data_t hid_incoming_data;
 
 
-#define GET_BUTTON_STATE(c, i) (i & (1 << c->input_pin))
-#define SET_OUTPUT_BIT(c, val)  ((val & 0x1) << (c->output - 1))
-#define GET_LED_STATE(c, i) (i & (1 << c->output_pin))
-#define GET_LED_INPUT(c, i) (i & (1 << (c->input - 1)))
-#define SET_LED_BIT(c, val)  ((val & 0x1) << (c->output_pin))
+#define GET_BUTTON_STATE(c, i) (i & (1 << c->button_pin))
+#define SET_OUTPUT_BIT(c, val)  ((val & 0x1) << (c->output_bit - 1))
+#define GET_LED_STATE(c, i) (i & (1 << c->led_pin))
+#define GET_LED_INPUT(c, i) (i & (1 << (c->input_bit - 1)))
+#define SET_LED_BIT(c, val)  ((val & 0x1) << (c->led_pin))
 int main(void)
 {
 
@@ -90,7 +106,7 @@ int main(void)
             output = 0;
             for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
                 input_config_t* c = &config[i];
-                if(c->output != 0 && c->input_pin >= 0) {
+                if(c->output_bit != 0 && c->button_pin >= 0) {
                     switch(c->mode) {
                         case DIRECT:
                             // just set output to button state
@@ -111,16 +127,16 @@ int main(void)
         led_data = 0;
         for(size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
             input_config_t* c = &config[i];
-            if(c->input != 0 && c->output_pin >= 0) {
+            if(c->input_bit != 0 && c->led_pin >= 0) {
                 led_data |= SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds));
-                printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
-                        hid_incoming_data.leds,
-                        i,
-                        c->input,
-                        GET_LED_INPUT(c, hid_incoming_data.leds),
-                        c->output_pin,
-                        SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds)),
-                        led_data);
+                //printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
+                //        hid_incoming_data.leds,
+                //        i,
+                //        c->input_bit,
+                //        GET_LED_INPUT(c, hid_incoming_data.leds),
+                //        c->led_pin,
+                //        SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds)),
+                //        led_data);
             }
         }
 

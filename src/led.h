@@ -1,8 +1,6 @@
 #ifndef LED_H
 #define LED_H
 
-#include "config.h"
-
 #include <stddef.h>
 #include <mcp23017.h>
 
