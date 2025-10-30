@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include <stddef.h>
+#include <mcp23017.h>
 
 typedef enum  {
     BLINK_NOT_OFF = 0,
@@ -12,7 +13,7 @@ typedef enum  {
     BLINK_SUSPENDED = 2500,
 } led_state_t;
 
-int led_init(const input_config_t config[], size_t len);
-int led_task(const input_config_t config[], size_t len, led_state_t state, uint32_t inputs);
+int led_init(i2c_inst* i2c, uint8_t addr);
+int led_task(led_state_t state, uint16_t states);
 
 #endif // LED_H

@@ -51,15 +51,15 @@ int main(void)
 
 
 
-	i2c_init(i2c0, 400000);
-	gpio_set_function(I2C_GPIO_PIN_SDA, GPIO_FUNC_I2C);
-	gpio_set_function(I2C_GPIO_PIN_SCL, GPIO_FUNC_I2C);
-	gpio_pull_up(I2C_GPIO_PIN_SDA);
-	gpio_pull_up(I2C_GPIO_PIN_SCL);
+    i2c_init(i2c0, 400000);
+    gpio_set_function(I2C_GPIO_PIN_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_GPIO_PIN_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(I2C_GPIO_PIN_SDA);
+    gpio_pull_up(I2C_GPIO_PIN_SCL);
 
     buttons_init(MCP_INPUT_IRQ_PIN, i2c0, MCP_INPUT);
 
-    led_init(config, TU_ARRAY_SIZE(config));
+    led_init(i2c0, MCP_OUTPUT);
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -78,7 +78,10 @@ int main(void)
         bool dirty = buttons_task(&inputs);
 
         hid_task(dirty, &inputs);
-        led_task(config, TU_ARRAY_SIZE(config), led_state, hid_incoming_data.leds);
+        (void)config;
+        // input data: hid_incoming_data.leds
+        // switch state: inputs
+        led_task(led_state, hid_incoming_data.leds);
     }
 
     // indicate no error

@@ -7,13 +7,44 @@
 #define LED_G 19
 #define LED_B 20
 
-int led_task(const input_config_t config[], size_t configLen, led_state_t state, uint32_t inputs)
+static Mcp23017* mcp_0;
+
+
+int led_init(i2c_inst* i2c, uint8_t addr)
 {
-    for(size_t i = 0; i < configLen; ++i) {
-        if(config[i].output_pin && config[i].input != 0) {
-            gpio_put(config[i].output_pin, inputs & (1 << (config[i].input - 1)));
-        }
+    // static cause I dunno how to separate declaration and initialization
+    static Mcp23017 _mcp(i2c, addr);
+    mcp_0 = &_mcp;
+
+    gpio_init(LED_R);
+    gpio_set_dir(LED_R, GPIO_OUT);
+    gpio_init(LED_G);
+    gpio_set_dir(LED_G, GPIO_OUT);
+    gpio_init(LED_B);
+    gpio_set_dir(LED_B, GPIO_OUT);
+
+    gpio_put(LED_R, 1);
+    gpio_put(LED_G, 1);
+    gpio_put(LED_B, 1);
+
+    int result = 0;
+
+    result |= mcp_0->set_io_direction(0x0000);
+    result |= mcp_0->set_pullup(0xFFFF);
+
+    if(result) {
+        printf("failed to init led mcp\n");
+        return 1;
     }
+    return 0;
+}
+
+int led_task(led_state_t state, uint16_t states)
+{
+    if(~states != mcp_0->get_output()) {
+        mcp_0->set_all_output_bits(~states);
+    }
+
   // TODO state handling better
     static uint32_t start_ms = 0;
     static bool led_state = false;
@@ -27,30 +58,5 @@ int led_task(const input_config_t config[], size_t configLen, led_state_t state,
 
     gpio_put(LED_R, led_state);
     led_state = 1 - led_state; // toggle
-    return 0;
-}
-
-int led_init(const input_config_t config[], size_t configLen)
-{
-    gpio_init(LED_R);
-    gpio_set_dir(LED_R, GPIO_OUT);
-    gpio_init(LED_G);
-    gpio_set_dir(LED_G, GPIO_OUT);
-    gpio_init(LED_B);
-    gpio_set_dir(LED_B, GPIO_OUT);
-
-    gpio_put(LED_R, 1);
-    gpio_put(LED_G, 1);
-    gpio_put(LED_B, 1);
-
-    int pin;
-    for(size_t i = 0; i < configLen; ++i) {
-        pin = config[i].output_pin;
-        if(pin >= 0) {
-            gpio_init(pin);
-            gpio_set_dir(pin, GPIO_OUT);
-            gpio_put(LED_R, 0);
-        }
-    }
     return 0;
 }
