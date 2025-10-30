@@ -23,7 +23,7 @@
 
 
 void hid_task(bool dirty, uint16_t* inputs);
-static void send_hid_report(uint8_t report_id, uint32_t btn);
+static void send_hid_report(uint8_t report_id, uint16_t btn);
 
 typedef enum {
     DIRECT, // output inputPin directly
@@ -228,7 +228,6 @@ int main(void)
                 }
             }
         }
-        printf("writing output %04X\n", output);
 
 
         hid_task(dirty, &output);
@@ -292,7 +291,7 @@ void tud_resume_cb(void)
 //--------------------------------------------------------------------+
 // Every 10ms, we will sent 1 report for each HID profile (keyboard, mouse etc ..)
 // tud_hid_report_complete_cb() is used to send the next report after previous one is complete
-static uint8_t btn;
+static uint16_t btn;
 void hid_task(bool dirty, uint16_t* inputs)
 {
     btn = *inputs;
@@ -380,31 +379,13 @@ void tud_hid_set_report_cb(uint8_t instance,
     }
 }
 
-static void send_hid_report(uint8_t report_id, uint32_t btn)
+static void send_hid_report(uint8_t report_id, uint16_t btn)
 {
     // skip if hid is not ready yet
     if (!tud_hid_ready())
         return;
 
     switch (report_id) {
-        case REPORT_ID_KEYBOARD: {
-            // use to avoid send multiple consecutive zero report for keyboard
-            static bool has_keyboard_key = false;
-
-            if (false && btn) {
-                uint8_t keycode[6] = { 0 };
-                keycode[0] = HID_KEY_A;
-
-                tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, keycode);
-                has_keyboard_key = true;
-            } else {
-                // send empty key report if previously has key pressed
-                if (has_keyboard_key)
-                    tud_hid_keyboard_report(REPORT_ID_KEYBOARD, 0, NULL);
-                has_keyboard_key = false;
-            }
-        } break;
-
         case REPORT_ID_GAMEPAD: {
             // use to avoid send multiple consecutive zero report for keyboard
             static bool has_gamepad_key = false;
@@ -414,7 +395,7 @@ static void send_hid_report(uint8_t report_id, uint32_t btn)
             };
 
             if (btn) {
-                report.buttons = 0x1;
+                report.buttons = btn;
                 tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
 
                 has_gamepad_key = true;

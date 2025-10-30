@@ -10,7 +10,6 @@
   HID_COLLECTION ( HID_COLLECTION_APPLICATION                   ), \
     /* Report ID if any */\
     __VA_ARGS__ \
-    HID_USAGE          ( HID_USAGE_DESKTOP_POINTER              ), \
     /* 16 bit Button Map */ \
     HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ), \
     HID_USAGE_MIN      ( 1                                      ), \
