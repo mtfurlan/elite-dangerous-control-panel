@@ -31,32 +31,128 @@ typedef enum {
 } input_mode_t;
 
 typedef struct {
-    uint8_t input_bit;  // 1-32, 0 is no input
-    uint8_t output_bit; // joy btn 1-32, 0 no output
-    int button_pin; // -1 is disabled // TODO: inputPin is tied to output number, seems confusing
+    uint32_t push_millis;
+    uint32_t unpush_millis;
+    int retry;
+} input_config_smart_t;
+
+typedef struct {
+    uint8_t input_bit;  // 1-32, 0 is no input (data from host, backwards from hid report, shhhh)
+    uint8_t output_bit; // joy btn 1-32, 0 no output (data to host)
+    int button_pin;     // -1 is disabled
     int led_pin;    // -1 is disabled
-                    // TODO: direction?
     input_mode_t mode;
-    uint32_t smart_millis;
+    input_config_smart_t smart;
 } input_config_t;
 
 static input_config_t config[] = { {
-        .input_bit = 1,
-        .output_bit = 1,
-        .button_pin = 0,
-        .led_pin = 15,
-        .mode = SMART,
-} };
+                                           .input_bit = 1,
+                                           .output_bit = 1,
+                                           .button_pin = 0,
+                                           .led_pin = 15,
+                                           .mode = DIRECT,
+                                   },
+                                   {
+                                           .input_bit = 2,
+                                           .output_bit = 2,
+                                           .button_pin = 1,
+                                           .led_pin = 14,
+                                           .mode = SMART,
+                                   } };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static my_hid_report_output_data_t hid_incoming_data;
 
 
-#define GET_BUTTON_STATE(c, i) (i & (1 << c->button_pin))
+#define GET_BUTTON_STATE(c, i) ((i & (1 << c->button_pin)) != 0)
 #define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->output_bit - 1))
-#define GET_LED_STATE(c, i)    (i & (1 << c->led_pin))
-#define GET_LED_INPUT(c, i)    (i & (1 << (c->input_bit - 1)))
+#define GET_LED_STATE(c, i)    ((i & (1 << c->led_pin)) != 0)
+#define GET_LED_INPUT(c, i)    ((i & (1 << (c->input_bit - 1))) != 0)
 #define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin))
+
+
+#define SMART_BUTTON_PRESS    100
+#define SMART_BUTTON_COOLDOWN 500
+#define SMART_BUTTON_RETRY    3
+
+/*
+ * for a smart button, work out what to tell usb based on state
+ * ideal operation
+ * flip switch, input off
+ * set output
+ * input on
+ * stop setting output
+ *
+ * unflip switch
+ * set output
+ * input off
+ * stop setting output
+ *
+ *
+ *
+ * set: do we set output
+ * c: smart config and state data {uint32_t push_millis, uint32_t unpush_millis, int retry}
+ * button_state: if button is pressed
+ * input_state: if computer has asserted a state
+ * return if we have made state dirty
+ */
+bool doSmartShit(bool* set, input_config_smart_t* c, bool button_state, bool input_state)
+{
+    *set = false;
+    if (button_state == input_state && c->push_millis == 0) {
+        // state agrees and we don't have a pushed button
+        c->retry = 0;
+        c->push_millis = 0;
+        c->unpush_millis = 0;
+        return false;
+    }
+    // if millis set and we haven't timed out
+    //printf("push millis: %ld, unpush millis: %ld, button: %d, led: %d %04X; ",
+    //       c->push_millis,
+    //       c->unpush_millis,
+    //       button_state,
+    //       input_state,
+    //       hid_incoming_data.leds);
+    // if we currently have a button pressed
+    if (c->push_millis != 0) {
+        // if we are done pressing it
+        if (board_millis() - c->push_millis > SMART_BUTTON_PRESS) {
+            c->push_millis = 0;
+            c->unpush_millis = board_millis();
+            //printf("button timed out at %ld\n", c->unpush_millis);
+            return true;
+        } else {
+            //printf("button continuing at %ld\n", board_millis());
+            *set = true;
+        }
+        // else we either are in retry or new button
+    } else if (button_state ^ input_state) {
+        if (c->retry >= SMART_BUTTON_RETRY) {
+            // too many retries, give up
+            //printf("too many retries gave up\n");
+            // TODO: set an error state or something?
+        } else {
+            if (c->unpush_millis == 0
+                || (board_millis() - c->unpush_millis > SMART_BUTTON_COOLDOWN)) {
+                c->push_millis = board_millis();
+                c->unpush_millis = 0;
+                c->retry++;
+                //printf("button xor led triggered at %ld\n", c->push_millis);
+                *set = true;
+                return true;
+            } else {
+                //printf("waiting for unpush timeout %ld %ld %ld\n",
+                //       board_millis(),
+                //       c->unpush_millis,
+                //       board_millis() - c->unpush_millis);
+            }
+        }
+    } else if (button_state == input_state) {
+        // they match, reset retry
+    }
+    return false;
+}
+
 int main(void)
 {
     // Initialize TinyUSB stack
@@ -84,7 +180,7 @@ int main(void)
 
     for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
         input_config_t* c = &config[i];
-        c->smart_millis = 0;
+        c->smart.push_millis = 0;
         if (c->mode == SMART && (c->input_bit == 0 || c->output_bit == 0)) {
             printf("config %d not valid, mode is SMART but doesn't have input or output\n", i);
             err |= 1;
@@ -112,38 +208,29 @@ int main(void)
 
         // input data: hid_incoming_data.leds
         // switch state: button_data
-        if (dirty) {
-            output = 0;
-            for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-                input_config_t* c = &config[i];
-                if (c->output_bit != 0 && c->button_pin >= 0) {
-                    switch (c->mode) {
-                        case DIRECT:
-                            // just set output to button state
-                            output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
-                            break;
-                        case SMART:
-                            // cases:
-                            //   millis set, and millis timeout
-                            //     unpush hid, unset millis
-                            //   no millis
-                            //     button xor led
-                            //       push hid set millis
-                            //       TODO: retry count so we don't spam?
-                            //
-                            // if button xor led, trigger a little
-                            if (GET_BUTTON_STATE(c, button_data)
-                                ^ GET_LED_STATE(c, hid_incoming_data.leds)) {
-                                //if(c->smart_millis != 0 && GET_BUTTON_STATE(c, button_data)) {
-                                //    c->smart_millis = board_millis();
-                                //if ( board_millis() - start_ms < 100) return; // not enough time
-                                //output |= SET_OUTPUT_BIT(c, 1); //TODO: trigger a duratin then turn off
-                            }
-                            break;
-                    }
+        output = 0;
+        for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+            input_config_t* c = &config[i];
+            if (c->output_bit != 0 && c->button_pin >= 0) {
+                switch (c->mode) {
+                    case DIRECT:
+                        // just set output to button state
+                        output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
+                        break;
+                    case SMART:
+                        bool set;
+                        dirty |= doSmartShit(&set,
+                                             &c->smart,
+                                             GET_BUTTON_STATE(c, button_data),
+                                             GET_LED_INPUT(c, hid_incoming_data.leds));
+                        output |= SET_OUTPUT_BIT(c, set);
+                        break;
                 }
             }
         }
+        printf("writing output %04X\n", output);
+
+
         hid_task(dirty, &output);
 
         led_data = 0;
