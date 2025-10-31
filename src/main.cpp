@@ -36,43 +36,42 @@ typedef struct {
     int retry;
 } input_config_smart_t;
 
-typedef bool (*get_state_f)(my_hid_report_output_data_t*);
+typedef bool (*get_state_f)(hid_incoming_data_t*);
 
 typedef struct {
     get_state_f get_state;
-    uint8_t output_bit; // joy btn 1-32, 0 no output (data to host)
-    int button_pin;     // -1 is disabled
-    int led_pin;        // -1 is disabled
+    uint8_t joystick_button; // joy btn 1-32, 0 no output (data to host)
+    int button_pin;          // -1 is disabled
+    int led_pin;             // -1 is disabled
     input_mode_t mode;
     input_config_smart_t smart;
 } input_config_t;
 
-static input_config_t config[]
-        = { {
-                    .get_state = [](my_hid_report_output_data_t* data) -> bool {
-                        return data->Flags.fields.LightsOn;
-                    },
-                    .output_bit = 1,
-                    .button_pin = 0,
-                    .led_pin = 15,
-                    .mode = DIRECT,
-            },
-            {
-                    .get_state = [](my_hid_report_output_data_t* data) -> bool {
-                        return data->Flags.fields.LightsOn;
-                    },
-                    .output_bit = 2,
-                    .button_pin = 1,
-                    .led_pin = 14,
-                    .mode = SMART,
-            } };
+static input_config_t config[] = { {
+                                           .get_state = [](hid_incoming_data_t* data) -> bool {
+                                               return data->Flags.fields.LightsOn;
+                                           },
+                                           .joystick_button = 1,
+                                           .button_pin = 0,
+                                           .led_pin = 15,
+                                           .mode = DIRECT,
+                                   },
+                                   {
+                                           .get_state = [](hid_incoming_data_t* data) -> bool {
+                                               return data->Flags.fields.Landing_Gear_Down;
+                                           },
+                                           .joystick_button = 2,
+                                           .button_pin = 1,
+                                           .led_pin = 14,
+                                           .mode = SMART,
+                                   } };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
-static my_hid_report_output_data_t hid_incoming_data;
+static hid_incoming_data_t hid_incoming_data;
 
 
 #define GET_BUTTON_STATE(c, i) ((i & (1 << c->button_pin)) != 0)
-#define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->output_bit - 1))
+#define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->joystick_button - 1))
 #define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin))
 
 
@@ -186,7 +185,7 @@ int main(void)
     for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
         input_config_t* c = &config[i];
         c->smart.push_millis = 0;
-        if (c->mode == SMART && (c->get_state == NULL || c->output_bit == 0)) {
+        if (c->mode == SMART && (c->get_state == NULL || c->joystick_button == 0)) {
             printf("config %d not valid, mode is SMART but doesn't have input or output\n", i);
             err |= 1;
         }
@@ -216,7 +215,7 @@ int main(void)
         output = 0;
         for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
             input_config_t* c = &config[i];
-            if (c->output_bit != 0 && c->button_pin >= 0) {
+            if (c->joystick_button != 0 && c->button_pin >= 0) {
                 switch (c->mode) {
                     case DIRECT:
                         // just set output to button state
@@ -368,15 +367,15 @@ void tud_hid_set_report_cb(uint8_t instance,
         // Set keyboard LED e.g Capslock, Numlock etc...
         if (report_id == REPORT_ID_GAMEPAD) {
             // bufsize should be (at least) 1
-            if (bufsize != sizeof(my_hid_report_output_data_t)) {
+            if (bufsize != sizeof(hid_incoming_data_t)) {
                 printf("got a weird size data from hid, reporrt id %d, expected %d bytes, got %d\n",
                        report_id,
-                       sizeof(my_hid_report_output_data_t),
+                       sizeof(hid_incoming_data_t),
                        bufsize);
                 return;
             }
 
-            hid_incoming_data = *(my_hid_report_output_data_t*)buffer;
+            hid_incoming_data = *(hid_incoming_data_t*)buffer;
 
             printf("got data\n");
         } else {
@@ -396,17 +395,15 @@ static void send_hid_report(uint8_t report_id, uint16_t btn)
             // use to avoid send multiple consecutive zero report for keyboard
             static bool has_gamepad_key = false;
 
-            my_hid_report_gamepad_buttons_t report = { //hid_gamepad_report_t report = {
-                                                       .buttons = 0
+            hid_button_report_t report = {
+                .buttons = btn,
             };
 
             if (btn) {
-                report.buttons = btn;
                 tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
 
                 has_gamepad_key = true;
             } else {
-                report.buttons = 0;
                 if (has_gamepad_key)
                     tud_hid_report(REPORT_ID_GAMEPAD, &report, sizeof(report));
                 has_gamepad_key = false;

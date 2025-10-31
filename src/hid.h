@@ -5,7 +5,7 @@
 
 typedef struct __attribute__((packed)) {
     uint16_t buttons;
-} my_hid_report_gamepad_buttons_t;
+} hid_button_report_t;
 
 
 typedef enum {
@@ -88,7 +88,7 @@ typedef struct __attribute__((packed)) {
     int8_t PipsWep;
     int8_t FireGroup;
     LegalState_e LegalState : 8;
-} my_hid_report_output_data_t;
+} hid_incoming_data_t;
 
 // clang-format off
 #define MY_REPORT_DESC_GAMEPAD_BUTTONS(...) \
@@ -117,10 +117,10 @@ typedef struct __attribute__((packed)) {
      * > A non constant main item was declaired without a corresponding usage.
      */ \
     HID_USAGE_MIN      ( 1                                      ), \
-    HID_USAGE_MAX      ( sizeof(my_hid_report_output_data_t)    ), \
+    HID_USAGE_MAX      ( sizeof(hid_incoming_data_t)    ), \
     HID_LOGICAL_MIN    ( 0                                      ), \
     HID_LOGICAL_MAX    ( 255                                    ), \
-    HID_REPORT_COUNT   ( sizeof(my_hid_report_output_data_t)    ), \
+    HID_REPORT_COUNT   ( sizeof(hid_incoming_data_t)    ), \
     HID_REPORT_SIZE    ( 8                                      ), \
     HID_OUTPUT         ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
   HID_COLLECTION_END
