@@ -36,29 +36,36 @@ typedef struct {
     int retry;
 } input_config_smart_t;
 
+typedef bool (*get_state_f)(my_hid_report_output_data_t*);
+
 typedef struct {
-    uint8_t input_bit;  // 1-32, 0 is no input (data from host, backwards from hid report, shhhh)
+    get_state_f get_state;
     uint8_t output_bit; // joy btn 1-32, 0 no output (data to host)
     int button_pin;     // -1 is disabled
-    int led_pin;    // -1 is disabled
+    int led_pin;        // -1 is disabled
     input_mode_t mode;
     input_config_smart_t smart;
 } input_config_t;
 
-static input_config_t config[] = { {
-                                           .input_bit = 2,
-                                           .output_bit = 1,
-                                           .button_pin = 0,
-                                           .led_pin = 15,
-                                           .mode = DIRECT,
-                                   },
-                                   {
-                                           .input_bit = 1,
-                                           .output_bit = 2,
-                                           .button_pin = 1,
-                                           .led_pin = 14,
-                                           .mode = SMART,
-                                   } };
+static input_config_t config[]
+        = { {
+                    .get_state = [](my_hid_report_output_data_t* data) -> bool {
+                        return data->Flags.fields.LightsOn;
+                    },
+                    .output_bit = 1,
+                    .button_pin = 0,
+                    .led_pin = 15,
+                    .mode = DIRECT,
+            },
+            {
+                    .get_state = [](my_hid_report_output_data_t* data) -> bool {
+                        return data->Flags.fields.LightsOn;
+                    },
+                    .output_bit = 2,
+                    .button_pin = 1,
+                    .led_pin = 14,
+                    .mode = SMART,
+            } };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static my_hid_report_output_data_t hid_incoming_data;
@@ -66,8 +73,6 @@ static my_hid_report_output_data_t hid_incoming_data;
 
 #define GET_BUTTON_STATE(c, i) ((i & (1 << c->button_pin)) != 0)
 #define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->output_bit - 1))
-#define GET_LED_STATE(c, i)    ((i & (1 << c->led_pin)) != 0)
-#define GET_LED_INPUT(c, i)    ((i & (1 << (c->input_bit - 1))) != 0)
 #define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin))
 
 
@@ -181,7 +186,7 @@ int main(void)
     for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
         input_config_t* c = &config[i];
         c->smart.push_millis = 0;
-        if (c->mode == SMART && (c->input_bit == 0 || c->output_bit == 0)) {
+        if (c->mode == SMART && (c->get_state == NULL || c->output_bit == 0)) {
             printf("config %d not valid, mode is SMART but doesn't have input or output\n", i);
             err |= 1;
         }
@@ -222,7 +227,7 @@ int main(void)
                         dirty |= doSmartShit(&set,
                                              &c->smart,
                                              GET_BUTTON_STATE(c, button_data),
-                                             GET_LED_INPUT(c, hid_incoming_data.leds));
+                                             c->get_state(&hid_incoming_data));
                         output |= SET_OUTPUT_BIT(c, set);
                         break;
                 }
@@ -235,8 +240,8 @@ int main(void)
         led_data = 0;
         for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
             input_config_t* c = &config[i];
-            if (c->input_bit != 0 && c->led_pin >= 0) {
-                led_data |= SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds));
+            if (c->get_state != NULL && c->led_pin >= 0) {
+                led_data |= SET_LED_BIT(c, c->get_state(&hid_incoming_data));
                 //printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
                 //        hid_incoming_data.leds,
                 //        i,
@@ -364,15 +369,16 @@ void tud_hid_set_report_cb(uint8_t instance,
         if (report_id == REPORT_ID_GAMEPAD) {
             // bufsize should be (at least) 1
             if (bufsize != sizeof(my_hid_report_output_data_t)) {
-                printf("got a weird size data from hid, reporrt id %d, size %d\n",
+                printf("got a weird size data from hid, reporrt id %d, expected %d bytes, got %d\n",
                        report_id,
+                       sizeof(my_hid_report_output_data_t),
                        bufsize);
                 return;
             }
 
             hid_incoming_data = *(my_hid_report_output_data_t*)buffer;
 
-            printf("got data %02X\n", (uint8_t)(hid_incoming_data.leds & 0xff));
+            printf("got data\n");
         } else {
             printf("got unexpected output repoort for id %d", report_id);
         }
