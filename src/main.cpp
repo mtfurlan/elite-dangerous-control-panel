@@ -47,24 +47,93 @@ typedef struct {
     input_config_smart_t smart;
 } input_config_t;
 
-static input_config_t config[] = { {
-                                           .get_state = [](hid_incoming_data_t* data) -> bool {
-                                               return data->Flags.fields.LightsOn;
-                                           },
-                                           .joystick_button = 1,
-                                           .button_pin = 0,
-                                           .led_pin = 15,
-                                           .mode = DIRECT,
-                                   },
-                                   {
-                                           .get_state = [](hid_incoming_data_t* data) -> bool {
-                                               return data->Flags.fields.Landing_Gear_Down;
-                                           },
-                                           .joystick_button = 2,
-                                           .button_pin = 1,
-                                           .led_pin = 14,
-                                           .mode = SMART,
-                                   } };
+static input_config_t config[] = {
+    {
+            .get_state = [](hid_incoming_data_t* data) -> bool {
+                return data->Flags.fields.Landing_Gear_Down;
+            },
+            .joystick_button = 1,
+            .button_pin = 0,
+            .led_pin = 0,
+            .mode = SMART,
+    },
+    {
+            .get_state = [](hid_incoming_data_t* data) -> bool {
+                return data->Flags.fields.LightsOn;
+            },
+            .joystick_button = 2,
+            .button_pin = 1,
+            .led_pin = 1,
+            .mode = SMART,
+    },
+    {
+            .get_state = [](hid_incoming_data_t* data) -> bool {
+                return data->Flags.fields.Night_Vision;
+            },
+            .joystick_button = 3,
+            .button_pin = 2,
+            .led_pin = 2,
+            .mode = SMART,
+    },
+    {
+            .get_state = [](hid_incoming_data_t* data) -> bool {
+                return data->Flags.fields.Hardpoints_Deployed;
+            },
+            .joystick_button = 4,
+            .button_pin = 3,
+            .led_pin = 3,
+            .mode = SMART,
+    },
+    {
+            .get_state = [](hid_incoming_data_t* data) -> bool {
+                return data->Flags.fields.Cargo_Scoop_Deployed;
+            },
+            .joystick_button = 5,
+            .button_pin = 4,
+            .led_pin = 4,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 6,
+            .button_pin = 5,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 7,
+            .button_pin = 6,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 8,
+            .button_pin = 7,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 9,
+            .button_pin = 8,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 10,
+            .button_pin = 9,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 11,
+            .button_pin = 10,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 12,
+            .button_pin = 11,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 13,
+            .button_pin = 12,
+            .mode = DIRECT,
+    },
+};
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static hid_incoming_data_t hid_incoming_data;

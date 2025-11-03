@@ -99,12 +99,22 @@ typedef struct __attribute__((packed)) {
     __VA_ARGS__ \
     /* 16 bit Button Map */ \
     HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ), \
-    HID_USAGE_MIN      ( 1                                      ), \
-    HID_USAGE_MAX      ( 16                                     ), \
+    /* add 0x11 so we get the linux BTN_TRIGGER_HAPPY, caus there are 40 of */ \
+    /* those, and only like 12 BTN_JOYSTICK */ \
+    /* Skip BTN_TRIGGER_HAPPY13 cause it (or BTN_JOYSTICK + 13 which is ?) */ \
+    /* to open the steam overlay which is annoying cause steam input */ \
+    /* detects this as the home button because everything *must* be a */ \
+    /* gamepad */ \
+    HID_USAGE_MIN      ( 0x11                                      ), \
+    HID_USAGE_MAX      ( 0x11 + 12                                     ), \
     HID_LOGICAL_MIN    ( 0                                      ), \
     HID_LOGICAL_MAX    ( 1                                      ), \
-    HID_REPORT_COUNT   ( 16                                     ), \
+    HID_REPORT_COUNT   ( 12                                     ), \
     HID_REPORT_SIZE    ( 1                                      ), \
+    HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
+    HID_USAGE_MIN      ( 0x11 + 13                                      ), \
+    HID_USAGE_MAX      ( 0x11 + 16                                     ), \
+    HID_REPORT_COUNT   ( 2                                     ), \
     HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
     /* 16 bit output */ \
     HID_USAGE_PAGE_N   ( 0xFF42, 2                              ), \
