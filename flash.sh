@@ -2,7 +2,6 @@
 set -euo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-binary="$DIR/build/projectThing.elf"
 vid=cafe
 pid=4003
 
@@ -12,7 +11,7 @@ h () {
     [ $# == 0 ] || echo "$*"
 
   cat <<EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [OPTION]...
+Usage: $(basename "${BASH_SOURCE[0]}") [OPTION]... <BINARY>
   flash code to board
 Available options:
   -h, --help        display this help and exit
@@ -51,6 +50,11 @@ while true ; do
         *) die "issue parsing args, unexpected argument '$1'!" ;;
     esac
 done
+
+binary="${1:-}"
+if [[ -z "$binary" ]]; then
+    h "need to pass in binary"
+fi
 
 if [[ "$rebuild" == true ]]; then
     cmake --build "$DIR/build"

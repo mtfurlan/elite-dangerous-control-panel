@@ -1,8 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-binary="$DIR/build/projectThing.elf"
 
 # shellcheck disable=SC2120
 h () {
@@ -10,7 +7,7 @@ h () {
     [ $# == 0 ] || echo "$*"
 
   cat <<EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [OPTION]...
+Usage: $(basename "${BASH_SOURCE[0]}") [OPTION]... <BINARY>
   run gdb
 Available options:
   -h, --help        display this help and exit
@@ -46,6 +43,11 @@ while true ; do
         *) die "issue parsing args, unexpected argument '$1'!" ;;
     esac
 done
+
+binary="${1:-}"
+if [[ -z "$binary" ]]; then
+    h "need to pass in binary"
+fi
 
 if [[ "$multicore" == true ]]; then
     # multicore means multiple gdb per core
