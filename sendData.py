@@ -138,10 +138,10 @@ class HIDReport(ctypes.LittleEndianStructure):
     _fields_ = [
         ("Flags", Flags),
         ("Flags2", Flags2),
-        ("PipsSys", ctypes.c_int8), # -1 for null, TODO: range? units are "half-pips"?
+        ("PipsSys", ctypes.c_int8), # -1 for null, 0-8
         ("PipsEng", ctypes.c_int8),
         ("PipsWep", ctypes.c_int8),
-        ("FireGroup", ctypes.c_int8), # -1 for unknown, TODO: how many can there be?
+        ("FireGroup", ctypes.c_int8), # -1 for unknown, A-H are 0-8
         ("LegalState", ctypes.c_int8), # -1 for unknown, 0-8
     ]
 
@@ -157,7 +157,7 @@ def transform(data: dict) -> HIDReport:
     report.PipSys = data['Pips'][0] if 'Pips' in data else -1;
     report.PipEng = data['Pips'][1] if 'Pips' in data else -1;
     report.PipWep = data['Pips'][2] if 'Pips' in data else -1;
-    report.FireGroup = data['Firegroup'] if 'FireGroup' in data else -1;
+    report.FireGroup = data['FireGroup'] if 'FireGroup' in data else -1;
     report.LegalState = int(LegalState[data['LegalState']] if 'LegalState' in data else LegalState["Unknown"]);
     return report
 
@@ -212,13 +212,23 @@ def parseJSON(status: dict) -> dict:
     return status;
 
 def parseFile(filename: str) -> dict:
-    with open(os.path.expanduser(statusFile), 'r') as file:
-        status = json.load(file)
-        return parseJSON(status)
+        with open(os.path.expanduser(statusFile), 'r') as file:
+            try:
+                status = json.load(file)
+            except:
+                print("failed to parse json")
+                print(file)
+                pass
+            return parseJSON(status)
 
 
+def sendReport(h, statusFile):
+    data = parseFile(statusFile)
+    hidreport = transform(data);
+    h.write(bytes([report_id]) + bytes(hidreport))
 
 with hid.Device(vid, pid) as h:
+    sendReport(h, statusFile);
     for changes in watch(os.path.dirname(os.path.expanduser(statusFile))):
         for change in changes:
             if change[0] not in [Change.added, Change.modified]:
@@ -227,8 +237,4 @@ with hid.Device(vid, pid) as h:
             if os.path.basename(filename) != "Status.json":
                 continue;
 
-            data = parseFile(filename)
-
-            hidreport = transform(data);
-
-            h.write(bytes([report_id]) + bytes(hidreport))
+            sendReport(h, filename);
