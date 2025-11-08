@@ -214,18 +214,22 @@ def parseJSON(status: dict) -> dict:
 def parseFile(filename: str) -> dict:
         with open(os.path.expanduser(statusFile), 'r') as file:
             try:
-                status = json.load(file)
+                data = file.read();
+                status = json.loads(data)
+                return parseJSON(status)
             except:
                 print("failed to parse json")
-                print(file)
+                print(f"raw was '${data}'")
+                return None
                 pass
-            return parseJSON(status)
+
 
 
 def sendReport(h, statusFile):
     data = parseFile(statusFile)
-    hidreport = transform(data);
-    h.write(bytes([report_id]) + bytes(hidreport))
+    if data:
+        hidreport = transform(data);
+        h.write(bytes([report_id]) + bytes(hidreport))
 
 with hid.Device(vid, pid) as h:
     sendReport(h, statusFile);
