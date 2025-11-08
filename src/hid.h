@@ -105,16 +105,16 @@ typedef struct __attribute__((packed)) {
     /* to open the steam overlay which is annoying cause steam input */ \
     /* detects this as the home button because everything *must* be a */ \
     /* gamepad */ \
-    HID_USAGE_MIN      ( 0x11                                      ), \
-    HID_USAGE_MAX      ( 0x11 + 12                                     ), \
+    HID_USAGE_MIN      ( 0x11                                   ), \
+    HID_USAGE_MAX      ( 0x11 + 12                              ), \
     HID_LOGICAL_MIN    ( 0                                      ), \
     HID_LOGICAL_MAX    ( 1                                      ), \
     HID_REPORT_COUNT   ( 12                                     ), \
     HID_REPORT_SIZE    ( 1                                      ), \
     HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
-    HID_USAGE_MIN      ( 0x11 + 13                                      ), \
-    HID_USAGE_MAX      ( 0x11 + 16                                     ), \
-    HID_REPORT_COUNT   ( 2                                     ), \
+    HID_USAGE_MIN      ( 0x11 + 13                              ), \
+    HID_USAGE_MAX      ( 0x11 + 17                              ), \
+    HID_REPORT_COUNT   ( 4                                      ), \
     HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
     /* 16 bit output */ \
     HID_USAGE_PAGE_N   ( 0xFF42, 2                              ), \
