@@ -18,4 +18,9 @@ int buttons_init(uint interrupt_pin, i2c_inst* i2c, uint8_t addr);
  */
 bool buttons_task(uint16_t* inputs);
 
+/*
+ * get a pin, must call
+ */
+bool buttons_read(int pin);
+
 #endif // BUTTONS_H

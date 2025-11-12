@@ -57,3 +57,9 @@ bool buttons_task(uint16_t* inputs)
     }
     return false;
 }
+
+bool buttons_read(int pin)
+{
+    mcp_0->update_and_get_input_values();
+    return mcp_0->get_last_input_pin_value(pin);
+}
