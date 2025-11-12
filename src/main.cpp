@@ -53,8 +53,8 @@ static input_config_t config[] = {
                 return data->Flags.fields.Landing_Gear_Down;
             },
             .joystick_button = 1,
-            .button_pin = 0,
-            .led_pin = 0,
+            .button_pin = 1,
+            .led_pin = 1,
             .mode = SMART,
     },
     {
@@ -62,8 +62,8 @@ static input_config_t config[] = {
                 return data->Flags.fields.LightsOn;
             },
             .joystick_button = 2,
-            .button_pin = 1,
-            .led_pin = 1,
+            .button_pin = 2,
+            .led_pin = 2,
             .mode = SMART,
     },
     {
@@ -71,8 +71,8 @@ static input_config_t config[] = {
                 return data->Flags.fields.Night_Vision;
             },
             .joystick_button = 3,
-            .button_pin = 2,
-            .led_pin = 2,
+            .button_pin = 3,
+            .led_pin = 3,
             .mode = SMART,
     },
     {
@@ -80,8 +80,8 @@ static input_config_t config[] = {
                 return data->Flags.fields.Hardpoints_Deployed;
             },
             .joystick_button = 4,
-            .button_pin = 3,
-            .led_pin = 3,
+            .button_pin = 4,
+            .led_pin = 4,
             .mode = SMART,
     },
     {
@@ -89,48 +89,53 @@ static input_config_t config[] = {
                 return data->Flags.fields.Cargo_Scoop_Deployed;
             },
             .joystick_button = 5,
-            .button_pin = 4,
-            .led_pin = 4,
+            .button_pin = 5,
+            .led_pin = 5,
             .mode = DIRECT,
     },
     {
             .joystick_button = 6,
-            .button_pin = 5,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 7,
             .button_pin = 6,
             .mode = DIRECT,
     },
     {
-            .joystick_button = 8,
+            .joystick_button = 7,
             .button_pin = 7,
             .mode = DIRECT,
     },
     {
-            .joystick_button = 9,
+            .joystick_button = 8,
             .button_pin = 8,
             .mode = DIRECT,
     },
     {
-            .joystick_button = 10,
+            .joystick_button = 9,
             .button_pin = 9,
             .mode = DIRECT,
     },
     {
-            .joystick_button = 11,
+            .joystick_button = 10,
             .button_pin = 10,
             .mode = DIRECT,
     },
     {
-            .joystick_button = 12,
+            .joystick_button = 11,
             .button_pin = 11,
             .mode = DIRECT,
     },
     {
-            .joystick_button = 13,
+            .joystick_button = 12,
             .button_pin = 12,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 13,
+            .button_pin = 13,
+            .mode = DIRECT,
+    },
+    {
+            .joystick_button = 16,
+            .button_pin = 16,
             .mode = DIRECT,
     },
 };
@@ -139,9 +144,9 @@ static led_state_t led_state = BLINK_NOT_MOUNTED;
 static hid_incoming_data_t hid_incoming_data;
 
 
-#define GET_BUTTON_STATE(c, i) ((i & (1 << c->button_pin)) != 0)
+#define GET_BUTTON_STATE(c, input) ((input & (1 << (c->button_pin - 1))) != 0)
 #define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->joystick_button - 1))
-#define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin))
+#define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin - 1))
 
 
 #define SMART_BUTTON_PRESS    100
@@ -253,10 +258,20 @@ int main(void)
 
     for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
         input_config_t* c = &config[i];
-        c->smart.push_millis = 0;
-        if (c->mode == SMART && (c->get_state == NULL || c->joystick_button == 0)) {
-            printf("config %d not valid, mode is SMART but doesn't have input or output\n", i);
-            err |= 1;
+        c->data.push_millis = 0;
+        switch(c->mode) {
+            case SMART:
+                if ((c->get_state == NULL)) {
+                    printf("config %d SMART needs get_state\n", i);
+                    err |= 1;
+                }
+
+            case DIRECT:
+                if (c->button_pin == 0 || c->joystick_button == 0) {
+                    printf("config %d SMART/DIRECT not valid doesn't have input or output\n", i);
+                    err |= 1;
+                }
+                break;
         }
     }
 
@@ -282,16 +297,16 @@ int main(void)
         // input data: hid_incoming_data.leds
         // switch state: button_data
         output = 0;
+        bool set;
         for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
             input_config_t* c = &config[i];
-            if (c->joystick_button != 0 && c->button_pin >= 0) {
+            if (c->joystick_button != 0 && c->button_pin > 0) {
                 switch (c->mode) {
                     case DIRECT:
                         // just set output to button state
                         output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
                         break;
                     case SMART:
-                        bool set;
                         dirty |= doSmartShit(&set,
                                              &c->smart,
                                              GET_BUTTON_STATE(c, button_data),
@@ -308,7 +323,7 @@ int main(void)
         led_data = 0;
         for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
             input_config_t* c = &config[i];
-            if (c->get_state != NULL && c->led_pin >= 0) {
+            if (c->get_state != NULL && c->led_pin > 0) {
                 led_data |= SET_LED_BIT(c, c->get_state(&hid_incoming_data));
                 //printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
                 //        hid_incoming_data.leds,
