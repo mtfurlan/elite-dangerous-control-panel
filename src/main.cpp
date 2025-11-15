@@ -8,7 +8,7 @@
 #include <mcp23017.h>
 
 #include "buttons.h"
-#include "config_direct.h"
+#include "config_button.h"
 #include "config_smart.h"
 #include "hid.h"
 #include "led.h"
@@ -59,15 +59,15 @@ static Config* config[] = {
                     [](hid_incoming_data_t* data) -> bool {
                         return data->Flags.fields.Cargo_Scoop_Deployed;
                     }),
-    new ConfigDirect(6, 6),
-    new ConfigDirect(7, 7),
-    new ConfigDirect(8, 8),
-    new ConfigDirect(9, 9),
-    new ConfigDirect(10, 10),
-    new ConfigDirect(11, 11),
-    new ConfigDirect(12, 12),
-    new ConfigDirect(13, 13),
-    new ConfigDirect(16, 16),
+    new ConfigButton(6, 6),
+    new ConfigButton(7, 7),
+    new ConfigButton(8, 8),
+    new ConfigButton(9, 9),
+    new ConfigButton(10, 10),
+    new ConfigButton(11, 11),
+    new ConfigButton(12, 12),
+    new ConfigButton(13, 13),
+    new ConfigButton(16, 16),
 };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;

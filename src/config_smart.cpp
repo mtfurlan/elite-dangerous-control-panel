@@ -3,7 +3,7 @@
 
 bool ConfigSmart::checkConfig(void)
 {
-    return !(this->ButtonPin == 0 || this->JoystickButton == 0);
+    return ConfigLED::checkConfig() && ConfigButton::checkConfig();
 }
 
 /*
@@ -86,12 +86,4 @@ bool ConfigSmart::generateOutput(uint16_t* output, uint16_t button, hid_incoming
         // they match, reset retry
     }
     return false;
-}
-
-void ConfigSmart::setLED(uint16_t* leds, hid_incoming_data_t* hid)
-{
-    if (this->LedPin) {
-        bool input_state = this->GetState(hid);
-        CFG_SET_BIT_VAL(*leds, this->LedPin, input_state);
-    }
 }

@@ -1,12 +1,12 @@
-#include "config_direct.h"
+#include "config_button.h"
 #include <stdio.h>
 
-bool ConfigDirect::checkConfig(void)
+bool ConfigButton::checkConfig(void)
 {
     return !(this->ButtonPin == 0 || this->JoystickButton == 0);
 }
 
-bool ConfigDirect::generateOutput(uint16_t* output, uint16_t button, hid_incoming_data_t* hid)
+bool ConfigButton::generateOutput(uint16_t* output, uint16_t button, hid_incoming_data_t* hid)
 {
     bool lastSet = CFG_CHECK_BIT(*output, this->JoystickButton);
     bool buttonPressed = CFG_CHECK_BIT(button, this->ButtonPin);
