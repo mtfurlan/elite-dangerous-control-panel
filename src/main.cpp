@@ -9,6 +9,7 @@
 
 #include "buttons.h"
 #include "config_button.h"
+#include "config_quadrature.h"
 #include "config_smart.h"
 #include "hid.h"
 #include "led.h"
@@ -67,6 +68,7 @@ static Config* config[] = {
     new ConfigButton(11, 11),
     new ConfigButton(12, 12),
     new ConfigButton(13, 13),
+    new ConfigQuadrature(14, 15, 14, 15),
     new ConfigButton(16, 16),
 };
 
