@@ -20,6 +20,9 @@ target_sources(ed_controller PUBLIC
         src/led.cpp
         src/buttons.cpp
         src/usb_descriptors.c
+        src/config.cpp
+        src/config_smart.cpp
+        src/config_direct.cpp
         )
 
 # Make sure TinyUSB can find tusb_config.h

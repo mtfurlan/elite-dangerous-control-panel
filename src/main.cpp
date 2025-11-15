@@ -8,6 +8,8 @@
 #include <mcp23017.h>
 
 #include "buttons.h"
+#include "config_direct.h"
+#include "config_smart.h"
 #include "hid.h"
 #include "led.h"
 #include "usb_descriptors.h"
@@ -25,211 +27,52 @@
 void hid_task(bool dirty, uint16_t* inputs);
 static void send_hid_report(uint8_t report_id, uint16_t btn);
 
-typedef enum {
-    DIRECT, // output inputPin directly
-    SMART,  // use a toggle switch, pretend to be button based on input state
-} input_mode_t;
 
-typedef struct {
-    uint32_t push_millis;
-    uint32_t unpush_millis;
-    int retry;
-} input_config_smart_t;
-
-typedef bool (*get_state_f)(hid_incoming_data_t*);
-
-typedef struct {
-    get_state_f get_state;
-    uint8_t joystick_button; // joy btn 1-32, 0 no output (data to host)
-    int button_pin;          // -1 is disabled
-    int led_pin;             // -1 is disabled
-    input_mode_t mode;
-    input_config_smart_t smart;
-} input_config_t;
-
-static input_config_t config[] = {
-    {
-            .get_state = [](hid_incoming_data_t* data) -> bool {
-                return data->Flags.fields.Landing_Gear_Down;
-            },
-            .joystick_button = 1,
-            .button_pin = 1,
-            .led_pin = 1,
-            .mode = SMART,
-    },
-    {
-            .get_state = [](hid_incoming_data_t* data) -> bool {
-                return data->Flags.fields.LightsOn;
-            },
-            .joystick_button = 2,
-            .button_pin = 2,
-            .led_pin = 2,
-            .mode = SMART,
-    },
-    {
-            .get_state = [](hid_incoming_data_t* data) -> bool {
-                return data->Flags.fields.Night_Vision;
-            },
-            .joystick_button = 3,
-            .button_pin = 3,
-            .led_pin = 3,
-            .mode = SMART,
-    },
-    {
-            .get_state = [](hid_incoming_data_t* data) -> bool {
-                return data->Flags.fields.Hardpoints_Deployed;
-            },
-            .joystick_button = 4,
-            .button_pin = 4,
-            .led_pin = 4,
-            .mode = SMART,
-    },
-    {
-            .get_state = [](hid_incoming_data_t* data) -> bool {
-                return data->Flags.fields.Cargo_Scoop_Deployed;
-            },
-            .joystick_button = 5,
-            .button_pin = 5,
-            .led_pin = 5,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 6,
-            .button_pin = 6,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 7,
-            .button_pin = 7,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 8,
-            .button_pin = 8,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 9,
-            .button_pin = 9,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 10,
-            .button_pin = 10,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 11,
-            .button_pin = 11,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 12,
-            .button_pin = 12,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 13,
-            .button_pin = 13,
-            .mode = DIRECT,
-    },
-    {
-            .joystick_button = 16,
-            .button_pin = 16,
-            .mode = DIRECT,
-    },
+static Config* config[] = {
+    new ConfigSmart(1,
+                    1,
+                    1,
+                    [](hid_incoming_data_t* data) -> bool {
+                        return data->Flags.fields.Landing_Gear_Down;
+                    }),
+    new ConfigSmart(2,
+                    2,
+                    2,
+                    [](hid_incoming_data_t* data) -> bool {
+                        return data->Flags.fields.LightsOn;
+                    }),
+    new ConfigSmart(3,
+                    3,
+                    3,
+                    [](hid_incoming_data_t* data) -> bool {
+                        return data->Flags.fields.Night_Vision;
+                    }),
+    new ConfigSmart(4,
+                    4,
+                    4,
+                    [](hid_incoming_data_t* data) -> bool {
+                        return data->Flags.fields.Hardpoints_Deployed;
+                    }),
+    new ConfigSmart(5,
+                    5,
+                    5,
+                    [](hid_incoming_data_t* data) -> bool {
+                        return data->Flags.fields.Cargo_Scoop_Deployed;
+                    }),
+    new ConfigDirect(6, 6),
+    new ConfigDirect(7, 7),
+    new ConfigDirect(8, 8),
+    new ConfigDirect(9, 9),
+    new ConfigDirect(10, 10),
+    new ConfigDirect(11, 11),
+    new ConfigDirect(12, 12),
+    new ConfigDirect(13, 13),
+    new ConfigDirect(16, 16),
 };
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static hid_incoming_data_t hid_incoming_data;
 
-
-#define GET_BUTTON_STATE(c, input) ((input & (1 << (c->button_pin - 1))) != 0)
-#define SET_OUTPUT_BIT(c, val) ((val & 0x1) << (c->joystick_button - 1))
-#define SET_LED_BIT(c, val)    ((val & 0x1) << (c->led_pin - 1))
-
-
-#define SMART_BUTTON_PRESS    100
-#define SMART_BUTTON_COOLDOWN 1500 // TODO retune after improving python script
-#define SMART_BUTTON_RETRY    3
-
-/*
- * for a smart button, work out what to tell usb based on state
- * ideal operation
- * flip switch, input off
- * set output
- * input on
- * stop setting output
- *
- * unflip switch
- * set output
- * input off
- * stop setting output
- *
- *
- *
- * set: do we set output
- * c: smart config and state data {uint32_t push_millis, uint32_t unpush_millis, int retry}
- * button_state: if button is pressed
- * input_state: if computer has asserted a state
- * return if we have made state dirty
- */
-bool doSmartShit(bool* set, input_config_smart_t* c, bool button_state, bool input_state)
-{
-    *set = false;
-    if (button_state == input_state && c->push_millis == 0) {
-        // state agrees and we don't have a pushed button
-        c->retry = 0;
-        c->push_millis = 0;
-        c->unpush_millis = 0;
-        return false;
-    }
-    // if millis set and we haven't timed out
-    //printf("push millis: %ld, unpush millis: %ld, button: %d, led: %d %04X; ",
-    //       c->push_millis,
-    //       c->unpush_millis,
-    //       button_state,
-    //       input_state,
-    //       hid_incoming_data.leds);
-    // if we currently have a button pressed
-    if (c->push_millis != 0) {
-        // if we are done pressing it
-        if (board_millis() - c->push_millis > SMART_BUTTON_PRESS) {
-            c->push_millis = 0;
-            c->unpush_millis = board_millis();
-            //printf("button timed out at %ld\n", c->unpush_millis);
-            return true;
-        } else {
-            //printf("button continuing at %ld\n", board_millis());
-            *set = true;
-        }
-        // else we either are in retry or new button
-    } else if (button_state ^ input_state) {
-        if (c->retry >= SMART_BUTTON_RETRY) {
-            // too many retries, give up
-            //printf("too many retries gave up\n");
-            // TODO: set an error state or something?
-        } else {
-            if (c->unpush_millis == 0
-                || (board_millis() - c->unpush_millis > SMART_BUTTON_COOLDOWN)) {
-                c->push_millis = board_millis();
-                c->unpush_millis = 0;
-                c->retry++;
-                //printf("button xor led triggered at %ld\n", c->push_millis);
-                *set = true;
-                return true;
-            } else {
-                //printf("waiting for unpush timeout %ld %ld %ld\n",
-                //       board_millis(),
-                //       c->unpush_millis,
-                //       board_millis() - c->unpush_millis);
-            }
-        }
-    } else if (button_state == input_state) {
-        // they match, reset retry
-    }
-    return false;
-}
 
 int main(void)
 {
@@ -256,22 +99,14 @@ int main(void)
     // let pico sdk use the first cdc interface for std io
     stdio_init_all();
 
-    for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-        input_config_t* c = &config[i];
-        c->data.push_millis = 0;
-        switch(c->mode) {
-            case SMART:
-                if ((c->get_state == NULL)) {
-                    printf("config %d SMART needs get_state\n", i);
-                    err |= 1;
-                }
+    tud_task();
 
-            case DIRECT:
-                if (c->button_pin == 0 || c->joystick_button == 0) {
-                    printf("config %d SMART/DIRECT not valid doesn't have input or output\n", i);
-                    err |= 1;
-                }
-                break;
+    for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+        Config* c = config[i];
+        if (!c->checkConfig()) {
+            sleep_ms(1000);
+            printf("config %d bad\n", i);
+            err |= 1;
         }
     }
 
@@ -287,6 +122,7 @@ int main(void)
     uint16_t button_data = 0;
     uint16_t output;
     uint16_t led_data;
+
     // main run loop
     while (1) {
         // TinyUSB device task | must be called regurlarly
@@ -296,25 +132,9 @@ int main(void)
 
         // input data: hid_incoming_data.leds
         // switch state: button_data
-        output = 0;
-        bool set;
         for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-            input_config_t* c = &config[i];
-            if (c->joystick_button != 0 && c->button_pin > 0) {
-                switch (c->mode) {
-                    case DIRECT:
-                        // just set output to button state
-                        output |= SET_OUTPUT_BIT(c, GET_BUTTON_STATE(c, button_data));
-                        break;
-                    case SMART:
-                        dirty |= doSmartShit(&set,
-                                             &c->smart,
-                                             GET_BUTTON_STATE(c, button_data),
-                                             c->get_state(&hid_incoming_data));
-                        output |= SET_OUTPUT_BIT(c, set);
-                        break;
-                }
-            }
+            Config* c = config[i];
+            dirty |= c->generateOutput(&output, button_data, &hid_incoming_data);
         }
 
 
@@ -322,18 +142,8 @@ int main(void)
 
         led_data = 0;
         for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-            input_config_t* c = &config[i];
-            if (c->get_state != NULL && c->led_pin > 0) {
-                led_data |= SET_LED_BIT(c, c->get_state(&hid_incoming_data));
-                //printf("data %04X, config %d uses bit %d, got %d, set bit %d of led as %d, leds is %d\n",
-                //        hid_incoming_data.leds,
-                //        i,
-                //        c->input_bit,
-                //        GET_LED_INPUT(c, hid_incoming_data.leds),
-                //        c->led_pin,
-                //        SET_LED_BIT(c, GET_LED_INPUT(c, hid_incoming_data.leds)),
-                //        led_data);
-            }
+            Config* c = config[i];
+            c->setLED(&led_data, &hid_incoming_data);
         }
 
         led_task(led_state, led_data);
