@@ -1,6 +1,34 @@
 #include "vbutton.h"
 #include <bsp/board_api.h>
 
+void VButton::ensure_pushing(void)
+{
+    switch (this->state) {
+        case VBTN_STOPPED:
+        case VBTN_DONE:
+            this->reset();
+            this->state = VBTN_PUSHED;
+            break;
+        default:
+            break;
+    }
+}
+
+void VButton::push(void)
+{
+    switch (this->state) {
+        case VBTN_STOPPED:
+        case VBTN_DONE:
+            this->reset();
+            this->state = VBTN_PUSHED;
+            break;
+        case VBTN_PUSHED:
+        case VBTN_COOLDOWN:
+            // schedule another push
+            --this->retryCurrent;
+            break;
+    }
+}
 void VButton::reset(void)
 {
     this->retryCurrent = 0;
@@ -10,19 +38,20 @@ void VButton::reset(void)
 bool VButton::process(void)
 {
     switch (this->state) {
-        case VBTN_STOPPED:
-            this->lastMillis = board_millis();
-            //printf("starting press %ld\n", this->lastMillis);
-            this->state = VBTN_PUSHED;
-            return true;
-            break;
         case VBTN_PUSHED:
-            // if we are done pressing it
-            if (board_millis() - this->lastMillis > this->pressLength) {
+            // if we haven't started pushing, start
+            if (this->lastMillis == 0) {
+                this->lastMillis = board_millis();
+                //printf("starting press %ld\n", this->lastMillis);
+                this->state = VBTN_PUSHED;
+                return true;
+
+                // if we are done pressing it
+            } else if (board_millis() - this->lastMillis > this->pressLength) {
                 //printf("done press press %ld\n", board_millis());
                 // if we have retry, go into unpushed else we're done, reset
                 //printf("retryCount: %d, retryCurrent: %d\n", this->retryCount, this->retryCurrent);
-                if (this->retryCount && ++(this->retryCurrent) <= this->retryCount) {
+                if (this->retryCount && ++this->retryCurrent < this->retryCount) {
                     this->state = VBTN_COOLDOWN;
                     this->lastMillis = board_millis();
                     //printf("scheduled retry #%d at %ld\n", this->retryCurrent, this->lastMillis);
@@ -48,6 +77,7 @@ bool VButton::process(void)
                 return false;
             }
             break;
+        case VBTN_STOPPED:
         case VBTN_DONE:
             return false;
             break;

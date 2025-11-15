@@ -9,11 +9,14 @@ bool ConfigButton::checkConfig(void)
 bool ConfigButton::generateOutput(uint16_t* output, uint16_t button, hid_incoming_data_t* hid)
 {
     bool lastSet = CFG_CHECK_BIT(*output, this->JoystickButton);
-    bool buttonPressed = CFG_CHECK_BIT(button, this->ButtonPin);
+    bool btn = CFG_CHECK_BIT(button, this->ButtonPin);
 
-    if (lastSet != buttonPressed) {
-        CFG_SET_BIT_VAL(*output, this->JoystickButton, buttonPressed);
-        return true;
+    if (btn != this->last) {
+        this->last = btn;
+        if (lastSet != btn) {
+            CFG_SET_BIT_VAL(*output, this->JoystickButton, btn);
+            return true;
+        }
     }
     return false;
 }

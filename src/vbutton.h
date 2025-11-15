@@ -17,8 +17,7 @@ protected:
     VButton_state_e state;
 
 public:
-    // TODO reconsider cooldown
-    VButton(int retryCount = 0, int pressLength = 500, int cooldownLength = 1500)
+    VButton(int retryCount, int pressLength, int cooldownLength)
         : retryCount(retryCount), pressLength(pressLength), cooldownLength(cooldownLength)
     {
         this->reset();
@@ -27,6 +26,16 @@ public:
      * reset state to stopped
      */
     void reset(void);
+
+    /**
+     * schedule *additional* push somehow
+     */
+    void push(void);
+
+    /*
+     * restart if stopped
+     */
+    void ensure_pushing(void);
 
     /*
      * run button

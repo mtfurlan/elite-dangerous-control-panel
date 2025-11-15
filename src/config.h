@@ -17,6 +17,7 @@ class Config
 {
 public:
     // check if config is valid on boot
+    // TODO: is checkConfig helpful?
     virtual bool checkConfig(void) = 0;
 
     /**

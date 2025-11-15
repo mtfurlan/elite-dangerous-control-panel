@@ -7,6 +7,7 @@ class ConfigButton : virtual public Config
 protected:
     int JoystickButton;
     int ButtonPin;
+    bool last;
 
 public:
     ConfigButton(int joystick_button, int button_pin)
