@@ -3,21 +3,19 @@
 #include "config.h"
 #include "config_button.h"
 #include "config_led.h"
+#include "vbutton.h"
 
 class ConfigSmart : virtual public Config, public ConfigLED, public ConfigButton
 {
 protected:
-    uint32_t PushMillis;
-    uint32_t UnpushMillis;
-    int retry;
+    VButton vbutton;
 
 public:
-    // TODO: I'm not real happy with the readability here
+    // TODO: I'm not real happy with the readability here mixing super constructors and code in the header
     ConfigSmart(int joystick_button, int button_pin, int led_pin, get_state_f get_state)
         : ConfigLED(led_pin, get_state), ConfigButton(joystick_button, button_pin)
     {
-        this->PushMillis = 0;
-        this->UnpushMillis = 0;
+        this->vbutton = VButton(3);
     }
 
     virtual bool checkConfig(void);

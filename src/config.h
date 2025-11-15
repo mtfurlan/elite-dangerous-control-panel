@@ -13,10 +13,6 @@ typedef bool (*get_state_f)(hid_incoming_data_t*);
 #define CFG_SET_BIT(x, pos)          (x |= (1U << (pos - 1)))
 #define CFG_SET_BIT_VAL(x, pos, val) (x = val ? x | (1U << (pos - 1)) : x & ~(1U << (pos - 1)))
 
-#define SMART_BUTTON_PRESS    100
-#define SMART_BUTTON_COOLDOWN 1500 // TODO retune after improving python script
-#define SMART_BUTTON_RETRY    3
-
 class Config
 {
 public:
