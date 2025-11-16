@@ -612,6 +612,10 @@
     [
       "ed91a7e0-4075-47b7-97ac-a2a1ed0ad274",
       "Root"
+    ],
+    [
+      "51d0a12d-0184-4541-a186-d55d5af9a000",
+      "KY-040 rotary encoder"
     ]
   ],
   "text_variables": {}

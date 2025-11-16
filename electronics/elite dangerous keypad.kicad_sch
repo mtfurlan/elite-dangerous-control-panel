@@ -2408,6 +2408,131 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "power:VCC"
+			(power)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Value" "VCC"
+				(at 0 3.556 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"VCC\""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "VCC_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "VCC_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 	)
 	(text "INPUT SECTION"
 		(exclude_from_sim no)
@@ -3809,6 +3934,16 @@
 	)
 	(wire
 		(pts
+			(xy 121.92 62.23) (xy 119.38 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "16789b30-5206-4332-841a-cf9a8e83ad6e")
+	)
+	(wire
+		(pts
 			(xy 240.03 62.23) (xy 243.84 62.23)
 		)
 		(stroke
@@ -4266,6 +4401,16 @@
 			(type default)
 		)
 		(uuid "40494e9a-abab-40c6-86d3-50327e237eb0")
+	)
+	(wire
+		(pts
+			(xy 130.81 57.15) (xy 130.81 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "406ee196-5bff-4b62-a1db-ab63b2e571ee")
 	)
 	(wire
 		(pts
@@ -4746,6 +4891,16 @@
 			(type default)
 		)
 		(uuid "6db097c0-ecdf-4424-86e1-09df98395fd6")
+	)
+	(wire
+		(pts
+			(xy 130.81 58.42) (xy 119.38 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6e3fb253-0f80-4e5b-8e12-bf95e683792c")
 	)
 	(wire
 		(pts
@@ -5406,6 +5561,16 @@
 			(type default)
 		)
 		(uuid "a839d451-9f9c-4d98-bb74-b7eae8ae5fe6")
+	)
+	(wire
+		(pts
+			(xy 121.92 63.5) (xy 121.92 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a9c9dbf0-27dc-4404-930a-e0a58e1cb6fa")
 	)
 	(bus
 		(pts
@@ -8716,6 +8881,73 @@
 			(project "elite dangerous keypad"
 				(path "/ed91a7e0-4075-47b7-97ac-a2a1ed0ad274"
 					(reference "#PWR017")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:VCC")
+		(at 130.81 57.15 0)
+		(mirror y)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "2dcc3cde-5f5a-4e50-b706-fd290631e201")
+		(property "Reference" "#PWR028"
+			(at 130.81 60.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "VCC"
+			(at 130.81 52.07 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 130.81 57.15 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 130.81 57.15 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VCC\""
+			(at 130.81 57.15 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "69d1d7f7-2865-4cb9-a56c-040a9a24cef8")
+		)
+		(instances
+			(project "elite dangerous keypad"
+				(path "/ed91a7e0-4075-47b7-97ac-a2a1ed0ad274"
+					(reference "#PWR028")
 					(unit 1)
 				)
 			)
@@ -12641,6 +12873,72 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 121.92 63.5 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "e31300be-85ad-416b-85b0-fa91dcb12206")
+		(property "Reference" "#PWR029"
+			(at 121.92 69.85 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 121.92 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 121.92 63.5 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 121.92 63.5 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 121.92 63.5 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "075917fb-885c-4489-81d4-7cc6d8d974f8")
+		)
+		(instances
+			(project "elite dangerous keypad"
+				(path "/ed91a7e0-4075-47b7-97ac-a2a1ed0ad274"
+					(reference "#PWR029")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R")
 		(at 256.54 92.71 90)
 		(unit 1)
@@ -13440,6 +13738,97 @@
 				(path "/ed91a7e0-4075-47b7-97ac-a2a1ed0ad274"
 					(reference "U2")
 					(unit 1)
+				)
+			)
+		)
+	)
+	(sheet
+		(at 106.68 55.88)
+		(size 12.7 10.16)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "51d0a12d-0184-4541-a186-d55d5af9a000")
+		(property "Sheetname" "KY-040 rotary encoder"
+			(at 106.172 53.848 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "KY-040.kicad_sch"
+			(at 106.426 54.356 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "CLK" input
+			(at 106.68 58.42 180)
+			(uuid "977bd756-9245-4cc9-9567-df486c58d003")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "DT" input
+			(at 106.68 60.96 180)
+			(uuid "0de85739-a46a-401d-8221-1da26ea48f59")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "GND" input
+			(at 119.38 62.23 0)
+			(uuid "b2d57d03-e71c-4fea-876b-ef1b62a07d5f")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(pin "SW" input
+			(at 106.68 63.5 180)
+			(uuid "2d5ac585-fe1e-4132-ab12-8c7b3cfa2992")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(pin "VCC" input
+			(at 119.38 58.42 0)
+			(uuid "0f31f2a3-eb21-4044-8e3d-aac7be11d375")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(instances
+			(project "elite dangerous keypad"
+				(path "/ed91a7e0-4075-47b7-97ac-a2a1ed0ad274"
+					(page "2")
 				)
 			)
 		)
