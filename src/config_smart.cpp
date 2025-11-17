@@ -1,11 +1,6 @@
 #include "config_smart.h"
 #include <stdio.h>
 
-bool ConfigSmart::checkConfig(void)
-{
-    return ConfigLED::checkConfig() && ConfigButton::checkConfig();
-}
-
 bool ConfigSmart::generateOutput(uint16_t* output, uint16_t button, hid_incoming_data_t* hid)
 {
     bool last_joystick = CFG_CHECK_BIT(*output, this->JoystickButton);

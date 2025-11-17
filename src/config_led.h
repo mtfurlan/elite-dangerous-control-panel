@@ -11,8 +11,6 @@ protected:
 public:
     ConfigLED(int led_pin, get_state_f get_state) : LEDPin(led_pin), GetState(get_state) {}
 
-    virtual bool checkConfig(void);
-
     virtual void setLED(uint16_t* leds, hid_incoming_data_t* hid);
 };
 

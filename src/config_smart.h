@@ -18,7 +18,6 @@ public:
     {
     }
 
-    virtual bool checkConfig(void);
     virtual bool generateOutput(uint16_t* output, uint16_t button, hid_incoming_data_t* hid);
 };
 

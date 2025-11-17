@@ -16,9 +16,10 @@ typedef bool (*get_state_f)(hid_incoming_data_t*);
 class Config
 {
 public:
-    // check if config is valid on boot
-    // TODO: is checkConfig helpful?
-    virtual bool checkConfig(void) = 0;
+    /**
+     * do any setup after system is running
+     */
+    virtual int init(void);
 
     /**
      * generate output based on input or time or whatever

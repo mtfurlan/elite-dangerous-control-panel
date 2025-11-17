@@ -1,11 +1,15 @@
 #include "config_quadrature.h"
 
+#include "buttons.h"
+
 #include <map>
 #include <stdio.h>
 
-bool ConfigQuadrature::checkConfig(void)
+int ConfigQuadrature::init(void)
 {
-    return true; // TODO is checkConfig helpful?
+    this->last_a = buttons_read(this->ButtonPinA);
+    this->last_b = buttons_read(this->ButtonPinB);
+    return 0;
 }
 
 bool ConfigQuadrature::generateOutput(uint16_t* output, uint16_t button, hid_incoming_data_t* hid)

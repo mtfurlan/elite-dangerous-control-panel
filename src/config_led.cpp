@@ -1,10 +1,5 @@
 #include "config_led.h"
 
-bool ConfigLED::checkConfig(void)
-{
-    return !(this->LEDPin == 0);
-}
-
 void ConfigLED::setLED(uint16_t* leds, hid_incoming_data_t* hid)
 {
     if (this->LEDPin) {

@@ -103,20 +103,25 @@ int main(void)
 
     tud_task();
 
-    for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-        Config* c = config[i];
-        if (!c->checkConfig()) {
-            sleep_ms(1000);
-            printf("config %d bad\n", i);
-            err |= 1;
+    bool fail = false;
+    if (err != 0) {
+        fail = true;
+    } else {
+        for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+            Config* c = config[i];
+            if ((err = c->init()) != 0) {
+                sleep_ms(1000);
+                printf("init failed for config %d bad: %d\n", i, err);
+                fail = true;
+            }
         }
     }
 
-    if (err) {
-        printf("failed to init: %d\n", err);
+    if (fail) {
         while (true) {
             tud_task();
             led_error();
+            printf("failed to init\n");
         }
     }
 
