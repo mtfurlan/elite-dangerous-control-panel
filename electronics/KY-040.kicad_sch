@@ -586,6 +586,26 @@
 		)
 		(uuid b63733c5-9dc5-495d-8aee-f76b2c533861)
 	)
+	(text "R2"
+		(exclude_from_sim no)
+		(at 70.104 89.154 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "1ae48afd-253a-48bc-84a8-dcb34bac1906")
+	)
+	(text "R3"
+		(exclude_from_sim no)
+		(at 79.756 89.916 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "21750cf2-ab59-485e-87eb-06e4d6a94b5c")
+	)
 	(text "R1, not populated\n"
 		(exclude_from_sim no)
 		(at 118.618 92.71 0)
