@@ -9,7 +9,7 @@
 
 # watch an elite dangerous Status.json for changes
 # when there is a chnage, parse it, transform it
-# then send as a HID report to a specific vid/pid
+# then send as a HID report to a specific VID/PID
 
 import hid
 import json
@@ -24,9 +24,9 @@ from watchfiles import watch, Change
 statusFile="~/projects/elite-dangerous/savegame/Status.json"
 #statusFile="/tmp/edtest/Status.json"
 
-vid = 0xcafe
-pid = 0x4003
-report_id = 1
+VID = 0xcafe
+PID = 0x4003
+REPORT_ID = 1
 
 # https://elite-journal.readthedocs.io/en/latest/Status%20File.html
 u8 = ctypes.c_uint8
@@ -229,9 +229,9 @@ def sendReport(h, statusFile):
     data = parseFile(statusFile)
     if data:
         hidreport = transform(data);
-        h.write(bytes([report_id]) + bytes(hidreport))
+        h.write(bytes([REPORT_ID]) + bytes(hidreport))
 
-with hid.Device(vid, pid) as h:
+with hid.Device(VID, PID) as h:
     sendReport(h, statusFile);
     for changes in watch(os.path.dirname(os.path.expanduser(statusFile))):
         for change in changes:
