@@ -5,10 +5,19 @@
 #include <map>
 #include <stdio.h>
 
+#define PIN_A 2
+#define PIN_B 3
+
 int ConfigQuadrature::init(void)
 {
     this->last_a = buttons_read(this->ButtonPinA);
     this->last_b = buttons_read(this->ButtonPinB);
+
+    gpio_init(PIN_A);
+    gpio_set_dir(PIN_A, GPIO_OUT);
+    gpio_init(PIN_B);
+    gpio_set_dir(PIN_B, GPIO_OUT);
+
     return 0;
 }
 
@@ -36,25 +45,34 @@ bool ConfigQuadrature::generateOutput(uint16_t* output, uint16_t button, hid_inc
         };
         // we only set last for valid states, so we know it's in the map
         // we can have invalid transitions though, so we have to find the second lookup
+        printf("quad transition from %d,%d to %d,%d\n", last_a, last_b, a, b);
         if (map[last].find(cur) != map[last].end()) {
-            this->quad_state += map[last].find(cur)->second;
+            printf("state going from %d to ", this->quad_state);
+            if (a == 1 && b == 1) {
+                switch (this->quad_state) {
+                    case 3:
+                        printf("(pushing cw) ");
+                        this->vbuttonCW.push();
+                        break;
+                    case -3:
+                        printf("(pushing ccw) ");
+                        this->vbuttonCCW.push();
+                        break;
+                    default:
+                        break;
+                }
+                this->quad_state = 0;
+            } else {
+                this->quad_state += map[last].find(cur)->second;
+            }
+            printf("%d\n", this->quad_state);
             this->last_a = a;
             this->last_b = b;
+            gpio_put(PIN_A, !b);
+            gpio_put(PIN_B, !a);
         } else {
             // do we just ignore bad transitions?
             printf("unknown quad state transition from %d,%d to %d,%d\n", last_a, last_b, a, b);
-        }
-        // -4 is ccw, reset
-        // +4 is cw, reset
-
-        if (this->quad_state == 4) {
-            printf("pushing cw\n");
-            this->vbuttonCW.push();
-            this->quad_state = 0;
-        } else if (this->quad_state == -4) {
-            printf("pushing ccw\n");
-            this->vbuttonCCW.push();
-            this->quad_state = 0;
         }
     }
 
