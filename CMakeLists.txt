@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 # initialize the SDK directly
+# NOTE: currently using https://github.com/raspberrypi/pico-sdk/pull/2629
 include(../pico-sdk/pico_sdk_init.cmake)
 
 project(ed_control_panel)
