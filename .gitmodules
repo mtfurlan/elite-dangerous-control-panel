@@ -4,3 +4,7 @@
 [submodule "vendor/adamboardman-pico-interfaces"]
 	path = vendor/adamboardman-pico-interfaces
 	url = git@github.com:adamboardman/pico-interfaces.git
+[submodule "vendor/pico-sdk"]
+	path = vendor/pico-sdk
+	url = git@github.com:will-v-pi/pico-sdk.git
+	branch = reset-lib
