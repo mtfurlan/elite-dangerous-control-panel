@@ -7,10 +7,6 @@
 
 #include <mcp23017.h>
 
-#include "buttons.h"
-#include "config_button.h"
-#include "config_quadrature.h"
-#include "config_smart.h"
 #include "hid.h"
 #include "led.h"
 #include "usb_descriptors.h"
@@ -28,49 +24,6 @@
 void hid_task(bool dirty, uint16_t* inputs);
 static void send_hid_report(uint8_t report_id, uint16_t btn);
 
-
-static Config* config[] = {
-    new ConfigSmart(1,
-                    1,
-                    1,
-                    [](hid_incoming_data_t* data) -> bool {
-                        return data->Flags.fields.Landing_Gear_Down;
-                    }),
-    new ConfigSmart(2,
-                    2,
-                    2,
-                    [](hid_incoming_data_t* data) -> bool {
-                        return data->Flags.fields.LightsOn;
-                    }),
-    new ConfigSmart(3,
-                    3,
-                    3,
-                    [](hid_incoming_data_t* data) -> bool {
-                        return data->Flags.fields.Night_Vision;
-                    }),
-    new ConfigSmart(4,
-                    4,
-                    4,
-                    [](hid_incoming_data_t* data) -> bool {
-                        return data->Flags.fields.Hardpoints_Deployed;
-                    }),
-    new ConfigSmart(5,
-                    5,
-                    5,
-                    [](hid_incoming_data_t* data) -> bool {
-                        return data->Flags.fields.Cargo_Scoop_Deployed;
-                    }),
-    new ConfigButton(6, 6),
-    new ConfigButton(7, 7),
-    new ConfigButton(8, 8),
-    new ConfigButton(9, 9),
-    new ConfigButton(10, 10),
-    new ConfigButton(11, 11),
-    new ConfigButton(12, 12),
-    new ConfigButton(13, 13),
-    new ConfigQuadrature(14, 15, 14, 15),
-    new ConfigButton(16, 16),
-};
 
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static hid_incoming_data_t hid_incoming_data;
@@ -90,7 +43,6 @@ int main(void)
     gpio_pull_up(I2C_GPIO_PIN_SCL);
 
     int err = 0;
-    err |= buttons_init(MCP_INPUT_IRQ_PIN, i2c0, MCP_INPUT);
     err |= led_init(i2c0, MCP_OUTPUT);
 
     // TinyUSB board init callback after init
@@ -106,15 +58,6 @@ int main(void)
     bool fail = false;
     if (err != 0) {
         fail = true;
-    } else {
-        for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-            Config* c = config[i];
-            if ((err = c->init()) != 0) {
-                sleep_ms(1000);
-                printf("init failed for config %d bad: %d\n", i, err);
-                fail = true;
-            }
-        }
     }
 
     if (fail) {
@@ -126,34 +69,17 @@ int main(void)
     }
 
     printf("hello running");
-    uint16_t button_data = 0;
-    uint16_t output;
-    uint16_t led_data;
 
     // main run loop
     while (1) {
         // TinyUSB device task | must be called regurlarly
         tud_task();
 
-        bool dirty = buttons_task(&button_data);
-
-        // input data: hid_incoming_data.leds
-        // switch state: button_data
-        for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-            Config* c = config[i];
-            dirty |= c->generateOutput(&output, button_data, &hid_incoming_data);
-        }
 
 
-        hid_task(dirty, &output);
+        //hid_task(dirty, &output);
 
-        led_data = 0;
-        for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
-            Config* c = config[i];
-            c->setLED(&led_data, &hid_incoming_data);
-        }
-
-        led_task(led_state, led_data);
+        led_task(led_state);
     }
 
     // indicate no error

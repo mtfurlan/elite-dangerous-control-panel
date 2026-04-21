@@ -1,11 +1,33 @@
 #ifndef HID_H
 #define HID_H
+/**
+ * this defines the structs used to send/recieve data over the usb descriptor
+ * it is included by usb/usb_descriptors.c
+ */
 
 #include <stdint.h>
 
+#define USB_MANUFACTURER_STR "sczie"
+#define USB_PRODUCT_STR "elite dangerous control panel"
+
+// set some example Vendor and Product ID
+// the board will use to identify at the host
+#define _PID_MAP(itf, n) ((CFG_TUD_##itf) << (n))
+#define VID              0xCafe
+// use _PID_MAP to generate unique PID for each interface
+#define PID (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(HID, 1))
+
+
+#define USB_VENDOR_USAGE_PAGE_FOR_INPUT 0xFF42
+
+/**
+ * data sent to computer as gamepad buttons
+ * see the USB definition below for HID_USAGE_PAGE_BUTTON
+ */
 typedef struct __attribute__((packed)) {
     uint16_t buttons;
 } hid_button_report_t;
+#define BUTTON_COUNT 16
 
 
 typedef enum {
@@ -20,6 +42,7 @@ typedef enum {
     Allied = 7,
     Thargoid = 8,
 } LegalState_e;
+
 typedef struct __attribute__((packed)) {
     union {
         uint32_t raw;
@@ -97,27 +120,25 @@ typedef struct __attribute__((packed)) {
   HID_COLLECTION ( HID_COLLECTION_APPLICATION                   ), \
     /* Report ID if any */\
     __VA_ARGS__ \
-    /* 16 bit Button Map */ \
+    \
+    /* BUTTON_COUNT bit Button Map
+     *
+     * 0x0 to 0xf are BTN_JOYSTICK or BTN_GAMEPAD which have hardcoded meanings
+     * we don't want to deal with
+     * https://github.com/torvalds/linux/blob/d46dd0d88341e45f8e0226fdef5462f5270898fc/include/uapi/linux/input-event-codes.h#L366-L400
+     * so start at 0x11 so we get the linux BTN_TRIGGER_HAPPY
+     * TODO: why skip 0x10 -> BTN_TRIGGER_HAPPY for of 0x11 ->BTN_TRIGGER_HAPPY1
+     * TODO: test that
+     */ \
     HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ), \
-    /* add 0x11 so we get the linux BTN_TRIGGER_HAPPY, caus there are 40 of */ \
-    /* those, and only like 12 BTN_JOYSTICK */ \
-    /* Skip BTN_TRIGGER_HAPPY13 cause it (or BTN_JOYSTICK + 13 which is ?) */ \
-    /* to open the steam overlay which is annoying cause steam input */ \
-    /* detects this as the home button because everything *must* be a */ \
-    /* gamepad */ \
-    HID_USAGE_MIN      ( 0x11                                   ), \
-    HID_USAGE_MAX      ( 0x11 + 12                              ), \
+    HID_REPORT_SIZE    ( 1                                      ), \
     HID_LOGICAL_MIN    ( 0                                      ), \
     HID_LOGICAL_MAX    ( 1                                      ), \
-    HID_REPORT_COUNT   ( 12                                     ), \
-    HID_REPORT_SIZE    ( 1                                      ), \
+    HID_USAGE_MIN      ( 0x11                                   ), \
+    HID_USAGE_MAX      ( 0x11 + BUTTON_COUNT                    ), \
+    HID_REPORT_COUNT   ( BUTTON_COUNT - 1                       ), \
     HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
-    HID_USAGE_MIN      ( 0x11 + 13                              ), \
-    HID_USAGE_MAX      ( 0x11 + 17                              ), \
-    HID_REPORT_COUNT   ( 4                                      ), \
-    HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
-    /* 16 bit output */ \
-    HID_USAGE_PAGE_N   ( 0xFF42, 2                              ), \
+    \
     /*
      * HID_USAGE_(MIN|MAX) gets a warning from hidrdd:
      * > Warning: Undocumented usage
@@ -126,11 +147,12 @@ typedef struct __attribute__((packed)) {
      * > This device cannot start. (Code 10)
      * > A non constant main item was declaired without a corresponding usage.
      */ \
+    HID_USAGE_PAGE_N   ( USB_VENDOR_USAGE_PAGE_FOR_INPUT, 2     ), \
     HID_USAGE_MIN      ( 1                                      ), \
-    HID_USAGE_MAX      ( sizeof(hid_incoming_data_t)    ), \
+    HID_USAGE_MAX      ( sizeof(hid_incoming_data_t)            ), \
     HID_LOGICAL_MIN    ( 0                                      ), \
     HID_LOGICAL_MAX    ( 255                                    ), \
-    HID_REPORT_COUNT   ( sizeof(hid_incoming_data_t)    ), \
+    HID_REPORT_COUNT   ( sizeof(hid_incoming_data_t)            ), \
     HID_REPORT_SIZE    ( 8                                      ), \
     HID_OUTPUT         ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ), \
   HID_COLLECTION_END

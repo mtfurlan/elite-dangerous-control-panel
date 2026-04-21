@@ -12,12 +12,6 @@
 
 #include "hid.h"
 
-// set some example Vendor and Product ID
-// the board will use to identify at the host
-#define _PID_MAP(itf, n) ((CFG_TUD_##itf) << (n))
-#define VID              0xCafe
-// use _PID_MAP to generate unique PID for each interface
-#define PID (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(HID, 1))
 // set USB 2.10 so the MS_OS_20_DESCRIPTOR works
 #define BCD 0x0210
 
@@ -35,13 +29,13 @@ enum {
 // array of pointer to string descriptors
 char const* string_desc_arr[] = {
     // switched because board is little endian
-    (const char[]){ 0x09, 0x04 },    // 0: supported language is English (0x0409)
-    "sczie",                         // 1: Manufacturer
-    "elite dangerous control panel", // 2: Product
-    NULL,                            // 3: Serials (null so it uses unique ID if available)
-    "stdio"                          // 4: CDC Interface 0
-    "TinyUSB hid stuff"              // 5: HIDs Interface
-    "picotool reset"                 // 5: Reset Interface
+    (const char[]){ 0x09, 0x04 },   // 0: supported language is English (0x0409)
+    USB_MANUFACTURER_STR,           // 1: Manufacturer
+    USB_PRODUCT_STR,                // 2: Product
+    NULL,                           // 3: Serials (null so it uses unique ID if available)
+    "stdio"                         // 4: CDC Interface 0
+    "TinyUSB hid stuff"             // 5: HIDs Interface
+    "picotool reset"                // 5: Reset Interface
 };
 
 
@@ -78,9 +72,8 @@ uint8_t const* tud_descriptor_device_cb(void);
 
 uint8_t const desc_hid_report[] = {
     MY_REPORT_DESC_GAMEPAD_BUTTONS(HID_REPORT_ID(REPORT_ID_GAMEPAD)),
-    //TUD_HID_REPORT_DESC_GAMEPAD ( HID_REPORT_ID(REPORT_ID_GAMEPAD          )),
-    //TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         )),
 };
+
 // Invoked when received GET HID REPORT DESCRIPTOR
 // Application return pointer to descriptor
 // Descriptor contents must exist long enough for transfer to complete

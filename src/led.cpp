@@ -39,12 +39,8 @@ int led_init(i2c_inst* i2c, uint8_t addr)
     return 0;
 }
 
-int led_task(led_state_t state, uint16_t states)
+int led_task(led_state_t state)
 {
-    if (~states != mcp_0->get_output()) {
-        mcp_0->set_all_output_bits(~states);
-    }
-
     // TODO state handling better
     static uint32_t start_ms = 0;
     static bool led_state = false;

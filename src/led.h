@@ -12,7 +12,7 @@ typedef enum {
 } led_state_t;
 
 int led_init(i2c_inst* i2c, uint8_t addr);
-int led_task(led_state_t state, uint16_t states);
+int led_task(led_state_t state);
 void led_error();
 
 #endif // LED_H
