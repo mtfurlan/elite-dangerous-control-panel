@@ -55,5 +55,6 @@ target_compile_definitions(${PROJECT} PUBLIC
 
 add_subdirectory(vendor/adamboardman-pico-interfaces)
 add_subdirectory(vendor/adamboardman-pico-mcp23017)
+add_subdirectory(vendor/QuadratureDecoder)
 
-target_link_libraries(${PROJECT} PRIVATE pico_mcp23017)
+target_link_libraries(${PROJECT} PRIVATE pico_mcp23017 QuadratureDecoder)

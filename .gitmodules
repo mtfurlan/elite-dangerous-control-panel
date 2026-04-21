@@ -8,3 +8,7 @@
 	path = vendor/pico-sdk
 	url = git@github.com:will-v-pi/pico-sdk.git
 	branch = reset-lib
+[submodule "vendor/QuadratureDecoder"]
+	path = vendor/QuadratureDecoder
+	url = git@github.com:mtfurlan/QuadratureDecoder.git
+	branch = refactor/make-lib
