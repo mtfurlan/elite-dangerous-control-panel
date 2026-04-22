@@ -7,15 +7,9 @@
 #define LED_G 19
 #define LED_B 20
 
-static Mcp23017* mcp_0;
 
-
-int led_init(i2c_inst* i2c, uint8_t addr)
+int led_init()
 {
-    // static cause I dunno how to separate declaration and initialization
-    static Mcp23017 _mcp(i2c, addr);
-    mcp_0 = &_mcp;
-
     gpio_init(LED_R);
     gpio_set_dir(LED_R, GPIO_OUT);
     gpio_init(LED_G);
@@ -27,15 +21,6 @@ int led_init(i2c_inst* i2c, uint8_t addr)
     gpio_put(LED_G, 1);
     gpio_put(LED_B, 1);
 
-    int result = 0;
-
-    result |= mcp_0->set_io_direction(0x0000);
-    result |= mcp_0->set_pullup(0xFFFF);
-
-    if (result) {
-        printf("failed to init led mcp\n");
-        return 1;
-    }
     return 0;
 }
 

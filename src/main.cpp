@@ -9,11 +9,12 @@
 
 #include "hid.h"
 #include "led.h"
-#include "usb_descriptors.h"
+#include "mcp.h"
+#include "usb/usb_descriptors.h"
 
 
-#define MCP_INPUT         0x20
-#define MCP_OUTPUT        0x27
+#define MCP_INPUT_ADDR         0x20
+#define MCP_OUTPUT_ADDR        0x27
 #define MCP_INPUT_IRQ_PIN 6
 
 
@@ -28,6 +29,8 @@ static void send_hid_report(uint8_t report_id, uint16_t btn);
 static led_state_t led_state = BLINK_NOT_MOUNTED;
 static hid_incoming_data_t hid_incoming_data;
 
+MCPInput mcp_button0(i2c0, MCP_INPUT_ADDR, MCP_INPUT_IRQ_PIN);
+MCPOutput mcp_output0(i2c0, MCP_OUTPUT_ADDR);
 
 int main(void)
 {
@@ -43,7 +46,8 @@ int main(void)
     gpio_pull_up(I2C_GPIO_PIN_SCL);
 
     int err = 0;
-    err |= led_init(i2c0, MCP_OUTPUT);
+    err |= mcp_button0.init();
+    err |= led_init();
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -75,6 +79,10 @@ int main(void)
         // TinyUSB device task | must be called regurlarly
         tud_task();
 
+        if(mcp_button0.changed()) {
+            mcp_output0.write(mcp_button0.read());
+        }
+        sleep_us(0);
 
 
         //hid_task(dirty, &output);

@@ -4,6 +4,7 @@ add_executable(${BINARY})
 target_sources(${BINARY} PUBLIC
     main.cpp
     led.cpp
+    mcp.cpp
 )
 # Make sure TinyUSB can find hid.h
 target_include_directories(${BINARY} PUBLIC
