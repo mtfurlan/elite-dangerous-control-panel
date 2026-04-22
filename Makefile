@@ -12,14 +12,15 @@ help:   ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  ${BLUE}%-${HELP_WIDTH}s${RESET} %s\n", $$1, $$2 } /^##@/ { printf "\n${BOLD}%s${RESET}\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 BUILD_DIR := build
-BINARY := ${BUILD_DIR}/ed_controller.elf
+BINARY := ${BUILD_DIR}/src/ed_controller.elf
 
 .DEFAULT_GOAL := ${BINARY}
 
 ${BUILD_DIR}: CMakeLists.txt
 	cmake -B $@ .
 
-${BINARY}: ${BUILD_DIR} CMakeLists.txt src/* ## compile the project
+.PHONY: ${BINARY}
+${BINARY}: ${BUILD_DIR}  ## compile the project
 	cmake --build ${BUILD_DIR}
 
 .PHONY: compile

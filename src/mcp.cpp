@@ -52,15 +52,17 @@ int MCPInput::init()
 
 bool MCPInput::changed()
 {
-    return interrupt_mcp;
+    return interrupt_mcp || time_reached(next_read);
 }
+
 uint16_t MCPInput::read()
 {
-    if(interrupt_mcp) {
-        return ~update_and_get_input_values();
-    } else {
-        return ~get_last_input_pin_values();
+    if(changed()) {
+        next_read = make_timeout_time_ms(1000);
+        interrupt_mcp = false;
+        update_and_get_input_values();
     }
+    return ~get_last_input_pin_values();
 }
 
 
@@ -75,6 +77,7 @@ int MCPOutput::init()
     int result = 0;
     result |= set_io_direction(0x0000);
     result |= set_pullup(0xFFFF);
+    write(0); // TODO: feels wrong?
 
     return result != 0;
 }

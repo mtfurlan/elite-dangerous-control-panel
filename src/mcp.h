@@ -11,6 +11,7 @@ class MCPInput : virtual public Mcp23017
 protected:
     uint interrupt_pin;
     bool interrupt_mcp;
+    absolute_time_t next_read;
     static MCPInput* irqMap[8];
 
     public:

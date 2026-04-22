@@ -80,7 +80,9 @@ int main(void)
         tud_task();
 
         if(mcp_button0.changed()) {
-            mcp_output0.write(mcp_button0.read());
+            uint16_t button_state = mcp_button0.read();
+            printf("%02X state \n", button_state);
+            mcp_output0.write(button_state);
         }
         sleep_us(0);
 
