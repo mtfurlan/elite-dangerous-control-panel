@@ -10,8 +10,14 @@ class MCPInput : virtual public Mcp23017
 {
 protected:
     uint interrupt_pin;
-    bool interrupt_mcp;
-    absolute_time_t next_read;
+    bool dirty;
+    /*
+     * isr requires static function, so we have to map back to class pointers
+     * this is just an array of the 8 possible addressed MCPs and we check based
+     * on the isr gpio
+     * I guess we could have more than 8 with more i²c busses, but we can burn
+     * that bridge when we get to it
+     */
     static MCPInput* irqMap[8];
 
     public:

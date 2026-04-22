@@ -13,6 +13,7 @@ MCPInput::MCPInput(i2c_inst_t *i2c,  uint8_t i2c_address, uint interrupt_pin)
     : Mcp23017(i2c, i2c_address), interrupt_pin(interrupt_pin)
 {
     irqMap[i2c_address - 0x20] = this;
+    dirty = true; // read on start
 }
 
 void MCPInput::irq(uint gpio, uint32_t event_mask)
@@ -21,7 +22,7 @@ void MCPInput::irq(uint gpio, uint32_t event_mask)
     if (event_mask & GPIO_IRQ_EDGE_FALL) {
         for(size_t i = 0; i < 8; ++i) {
             if (MCPInput::irqMap[i] != NULL && MCPInput::irqMap[i]->interrupt_pin == gpio) {
-                MCPInput::irqMap[i]->interrupt_mcp = true;
+                MCPInput::irqMap[i]->dirty = true;
             }
         }
     }
@@ -52,14 +53,13 @@ int MCPInput::init()
 
 bool MCPInput::changed()
 {
-    return interrupt_mcp || time_reached(next_read);
+    return dirty;
 }
 
 uint16_t MCPInput::read()
 {
     if(changed()) {
-        next_read = make_timeout_time_ms(1000);
-        interrupt_mcp = false;
+        dirty = false;
         update_and_get_input_values();
     }
     return ~get_last_input_pin_values();
