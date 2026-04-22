@@ -6,6 +6,7 @@
 #include <tusb.h>
 
 #include <mcp23017.h>
+#include <QuadratureDecoder.h>
 
 #include "hid.h"
 #include "led.h"
@@ -17,6 +18,7 @@
 #define MCP_OUTPUT_ADDR        0x27
 #define MCP_INPUT_IRQ_PIN 6
 
+#define QUAD_ENC_BASE 2 // also does 3
 
 #define I2C_GPIO_PIN_SDA 4
 #define I2C_GPIO_PIN_SCL 5
@@ -47,7 +49,14 @@ int main(void)
 
     int err = 0;
     err |= mcp_button0.init();
+    err |= mcp_output0.init();
     err |= led_init();
+
+    QuadratureDecoder decoder;
+    int32_t lastCounter = 0;
+
+    decoder.init(pio0);
+    int32_t index = decoder.addQuadratureEncoder(QUAD_ENC_BASE);
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -75,6 +84,7 @@ int main(void)
     printf("hello running");
 
     // main run loop
+    absolute_time_t nextSampleTime = get_absolute_time();
     while (1) {
         // TinyUSB device task | must be called regurlarly
         tud_task();
@@ -85,6 +95,14 @@ int main(void)
             mcp_output0.write(button_state);
         }
         sleep_us(0);
+
+        if (time_reached(nextSampleTime)) {
+            nextSampleTime = make_timeout_time_ms(100);
+            int32_t currCounter = decoder.getCount(index);
+            int32_t deltaCounter = currCounter - lastCounter;
+            lastCounter = currCounter;
+            printf("curr: %ld, delta: %ld\n", currCounter, deltaCounter);
+        }
 
 
         //hid_task(dirty, &output);

@@ -77,7 +77,7 @@ int MCPOutput::init()
     int result = 0;
     result |= set_io_direction(0x0000);
     result |= set_pullup(0xFFFF);
-    write(0); // TODO: feels wrong?
+    write(0x0);
 
     return result != 0;
 }
