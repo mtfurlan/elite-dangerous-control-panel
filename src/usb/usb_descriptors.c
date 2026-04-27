@@ -33,9 +33,9 @@ char const* string_desc_arr[] = {
     USB_MANUFACTURER_STR,           // 1: Manufacturer
     USB_PRODUCT_STR,                // 2: Product
     NULL,                           // 3: Serials (null so it uses unique ID if available)
-    "stdio"                         // 4: CDC Interface 0
-    "TinyUSB hid stuff"             // 5: HIDs Interface
-    "picotool reset"                // 5: Reset Interface
+    "stdio",                        // 4: CDC Interface 0
+    "TinyUSB hid stuff",            // 5: HIDs Interface
+    "picotool reset",               // 6: Reset Interface
 };
 
 

@@ -1,5 +1,4 @@
-#ifndef HID_H
-#define HID_H
+#pragma once
 /**
  * this defines the structs used to send/recieve data over the usb descriptor
  * it is included by usb/usb_descriptors.c
@@ -158,6 +157,3 @@ typedef struct __attribute__((packed)) {
   HID_COLLECTION_END
 
 // clang-format on
-
-
-#endif // HIDREPORT_H

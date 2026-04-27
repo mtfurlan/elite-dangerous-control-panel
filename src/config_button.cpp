@@ -15,3 +15,9 @@ bool ConfigButton::process(hid_button_report_t* output, hid_incoming_data_t* hid
     }
     return false;
 }
+
+int ConfigButton::init(void)
+{
+    MCPInput* mcp = (MCPInput*)hardware_data_source;
+    last = !mcp->getPin(ButtonPin);
+}

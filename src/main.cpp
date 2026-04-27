@@ -93,7 +93,7 @@ int main(void)
         }
     }
 
-    printf("hello running");
+    printf("hello running\n");
 
     // main run loop
     absolute_time_t nextSampleTime = get_absolute_time();
@@ -238,7 +238,7 @@ void tud_hid_set_report_cb(uint8_t instance,
         if (report_id == REPORT_ID_GAMEPAD) {
             // bufsize should be (at least) 1
             if (bufsize != sizeof(hid_incoming_data_t)) {
-                printf("got a weird size data from hid, reporrt id %d, expected %d bytes, got %d\n",
+                printf("got a weird size data from hid, report id %d, expected %d bytes, got %d\n",
                        report_id,
                        sizeof(hid_incoming_data_t),
                        bufsize);
@@ -249,7 +249,7 @@ void tud_hid_set_report_cb(uint8_t instance,
 
             printf("got data\n");
         } else {
-            printf("got unexpected output repoort for id %d", report_id);
+            printf("got unexpected output report for id %d", report_id);
         }
     }
 }
@@ -301,7 +301,7 @@ void tud_cdc_rx_cb(uint8_t itf)
     // | IMPORTANT: also do this for CDC0 because otherwise
     // | you won't be able to print anymore to CDC0
     // | next time this function is called
-    uint32_t count = tud_cdc_n_read(itf, buf, sizeof(buf));
+    uint32_t count = tud_cdc_n_read(itf, buf, sizeof(buf)-1);
 
     // check if the data was received on the second cdc interface
     if (itf == 1) {

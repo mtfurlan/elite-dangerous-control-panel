@@ -1,5 +1,4 @@
-#ifndef LED_H
-#define LED_H
+#pragma once
 
 #include <mcp23017.h>
 #include <stddef.h>
@@ -14,5 +13,3 @@ typedef enum {
 int led_init();
 int led_task(led_state_t state);
 void led_error();
-
-#endif // LED_H

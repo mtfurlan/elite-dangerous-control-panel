@@ -10,7 +10,7 @@ class MCPInput : virtual public Mcp23017
 {
 protected:
     uint interrupt_pin;
-    bool dirty;
+    volatile bool dirty;
     /*
      * isr requires static function, so we have to map back to class pointers
      * this is just an array of the 8 possible addressed MCPs and we check based
