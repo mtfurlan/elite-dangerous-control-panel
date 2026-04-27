@@ -27,6 +27,7 @@ protected:
 
         bool changed();
         uint16_t read();
+        bool getPin(int pin);
 
         static void irq(uint gpio, uint32_t event_mask);
 };

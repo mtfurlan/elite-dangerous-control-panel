@@ -5,9 +5,9 @@
 #include <pico/stdio.h>
 #include <tusb.h>
 
-#include <mcp23017.h>
 #include <QuadratureDecoder.h>
 
+#include "config_button.h"
 #include "hid.h"
 #include "led.h"
 #include "mcp.h"
@@ -34,6 +34,12 @@ static hid_incoming_data_t hid_incoming_data;
 MCPInput mcp_button0(i2c0, MCP_INPUT_ADDR, MCP_INPUT_IRQ_PIN);
 MCPOutput mcp_output0(i2c0, MCP_OUTPUT_ADDR);
 
+
+static Config* config[] = {
+    new ConfigButton(&mcp_button0, 6, 6),
+    new ConfigButton(&mcp_button0, 7, 7),
+};
+
 int main(void)
 {
     // Initialize TinyUSB stack
@@ -52,11 +58,21 @@ int main(void)
     err |= mcp_output0.init();
     err |= led_init();
 
+    for (size_t i = 0; i < TU_ARRAY_SIZE(config); ++i) {
+        Config* c = config[i];
+        if ((err = c->init()) != 0) {
+            sleep_ms(1000);
+            printf("init failed for config %d bad: %d\n", i, err);
+            err = 1;
+        }
+    }
     QuadratureDecoder decoder;
-    int32_t lastCounter = 0;
+    int32_t lastCounter0 = 0;
+    int32_t lastCounter1 = 0;
 
     decoder.init(pio0);
-    int32_t index = decoder.addQuadratureEncoder(QUAD_ENC_BASE);
+    int32_t index0 = decoder.addQuadratureEncoder(QUAD_ENC_BASE);
+    int32_t index1 = decoder.addQuadratureEncoder(26);
 
     // TinyUSB board init callback after init
     if (board_init_after_tusb) {
@@ -68,12 +84,8 @@ int main(void)
 
     tud_task();
 
-    bool fail = false;
-    if (err != 0) {
-        fail = true;
-    }
 
-    if (fail) {
+    if (err != 0) {
         while (true) {
             tud_task();
             led_error();
@@ -98,10 +110,13 @@ int main(void)
 
         if (time_reached(nextSampleTime)) {
             nextSampleTime = make_timeout_time_ms(100);
-            int32_t currCounter = decoder.getCount(index);
-            int32_t deltaCounter = currCounter - lastCounter;
-            lastCounter = currCounter;
-            printf("curr: %ld, delta: %ld\n", currCounter, deltaCounter);
+            int32_t currCounter0 = decoder.getCount(index0);
+            int32_t deltaCounter0 = currCounter0 - lastCounter0;
+            lastCounter0 = currCounter0;
+            int32_t currCounter1 = decoder.getCount(index1);
+            int32_t deltaCounter1 = currCounter1 - lastCounter1;
+            lastCounter1 = currCounter1;
+            printf("curr0: %ld, delta0: %ld; curr1: %ld, delta1: %ld\n", currCounter0, deltaCounter0, currCounter1, deltaCounter1);
         }
 
 

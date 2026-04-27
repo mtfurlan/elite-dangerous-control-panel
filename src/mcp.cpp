@@ -65,6 +65,11 @@ uint16_t MCPInput::read()
     return ~get_last_input_pin_values();
 }
 
+bool MCPInput::getPin(int pin)
+{
+	return get_last_input_pin_value(pin);
+}
+
 
 
 // ======================================================

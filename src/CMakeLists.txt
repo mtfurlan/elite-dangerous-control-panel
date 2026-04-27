@@ -5,6 +5,8 @@ target_sources(${BINARY} PUBLIC
     main.cpp
     led.cpp
     mcp.cpp
+    config.cpp
+    config_button.cpp
 )
 # Make sure TinyUSB can find hid.h
 target_include_directories(${BINARY} PUBLIC
